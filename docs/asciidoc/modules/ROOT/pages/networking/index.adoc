@@ -11,19 +11,19 @@ Network configuration, troubleshooting, and advanced setups.
 |===
 |Topic |Description
 
-|xref:networking/ip-command.adoc[**ip Command**]
+|**ip Command**
 |Address, route, link, neighbor management
 
-|xref:networking/networkmanager.adoc[**NetworkManager**]
+|**NetworkManager**
 |nmcli, connections, profiles, dispatchers
 
-|xref:networking/systemd-networkd.adoc[**systemd-networkd**]
+|**systemd-networkd**
 |Network units, links, netdevs
 
-|xref:networking/dns.adoc[**DNS**]
+|**DNS**
 |systemd-resolved, /etc/resolv.conf, split DNS
 
-|xref:networking/bonding-bridging.adoc[**Bonding & Bridging**]
+|**Bonding & Bridging**
 |Link aggregation, virtual bridges
 |===
 

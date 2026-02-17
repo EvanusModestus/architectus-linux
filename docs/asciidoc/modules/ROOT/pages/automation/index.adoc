@@ -11,13 +11,13 @@ Scripting, scheduling, and configuration management.
 |===
 |Topic |Description
 
-|xref:automation/bash-scripting.adoc[**Bash Scripting**]
+|**Bash Scripting**
 |Best practices, error handling, common patterns
 
-|xref:automation/systemd-timers.adoc[**systemd Timers**]
+|**systemd Timers**
 |Scheduled tasks, calendar expressions
 
-|xref:automation/ansible.adoc[**Ansible**]
+|**Ansible**
 |Playbooks, roles, inventory, idempotency
 |===
 

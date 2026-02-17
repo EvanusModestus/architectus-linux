@@ -11,16 +11,16 @@ Core system administration: systemd, users, packages, and logging.
 |===
 |Topic |Description
 
-|xref:administration/systemd.adoc[**systemd**]
+|**systemd**
 |Service management, units, targets, timers
 
-|xref:administration/users-permissions.adoc[**Users & Permissions**]
+|**Users & Permissions**
 |User management, groups, sudo, ACLs
 
-|xref:administration/package-management.adoc[**Package Management**]
+|**Package Management**
 |pacman, dnf, apt - installation, updates, cleanup
 
-|xref:administration/logging.adoc[**Logging**]
+|**Logging**
 |journald, rsyslog, log rotation, centralized logging
 |===
 

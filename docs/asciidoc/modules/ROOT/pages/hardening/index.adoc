@@ -11,22 +11,22 @@ Defense in depth: SSH, firewalls, mandatory access control, and audit.
 |===
 |Topic |Description
 
-|xref:hardening/ssh.adoc[**SSH Hardening**]
+|**SSH Hardening**
 |Key-based auth, disable root, port changes, fail2ban
 
-|xref:hardening/firewall.adoc[**Firewall**]
+|**Firewall**
 |firewalld, nftables, zones, services, rich rules
 
-|xref:hardening/selinux.adoc[**SELinux**]
+|**SELinux**
 |Contexts, booleans, troubleshooting, custom policies
 
-|xref:hardening/apparmor.adoc[**AppArmor**]
+|**AppArmor**
 |Profiles, enforcement modes, creating profiles
 
-|xref:hardening/auditd.adoc[**Audit Framework**]
+|**Audit Framework**
 |auditd rules, ausearch, aureport, compliance
 
-|xref:hardening/cis-benchmarks.adoc[**CIS Benchmarks**]
+|**CIS Benchmarks**
 |Automated hardening, compliance scanning
 |===
 

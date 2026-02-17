@@ -11,13 +11,13 @@ Diagnosing and resolving common Linux issues.
 |===
 |Topic |Description
 
-|xref:troubleshooting/boot-issues.adoc[**Boot Issues**]
+|**Boot Issues**
 |GRUB, initramfs, systemd boot failures
 
-|xref:troubleshooting/networking.adoc[**Network Issues**]
+|**Network Issues**
 |Connectivity, DNS, routing problems
 
-|xref:troubleshooting/performance.adoc[**Performance**]
+|**Performance**
 |CPU, memory, I/O bottlenecks
 |===
 

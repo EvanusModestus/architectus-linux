@@ -11,16 +11,16 @@ Distribution-specific configuration and best practices.
 |===
 |Topic |Description
 
-|xref:distributions/arch.adoc[**Arch Linux**]
+|**Arch Linux**
 |pacman, AUR, rolling release management
 
-|xref:distributions/rhel.adoc[**RHEL/Rocky/Alma**]
+|**RHEL/Rocky/Alma**
 |Enterprise Linux, subscriptions, EPEL
 
-|xref:distributions/debian.adoc[**Debian/Ubuntu**]
+|**Debian/Ubuntu**
 |apt, PPAs, release upgrades
 
-|xref:distributions/fedora.adoc[**Fedora**]
+|**Fedora**
 |dnf, COPR, version upgrades
 |===
 

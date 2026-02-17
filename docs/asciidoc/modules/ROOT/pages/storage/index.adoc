@@ -11,19 +11,19 @@ Disk management, logical volumes, filesystems, and encryption.
 |===
 |Topic |Description
 
-|xref:storage/lvm.adoc[**LVM**]
+|**LVM**
 |Physical volumes, volume groups, logical volumes
 
-|xref:storage/filesystems.adoc[**Filesystems**]
+|**Filesystems**
 |ext4, XFS, creation, tuning, repair
 
-|xref:storage/encryption.adoc[**LUKS Encryption**]
+|**LUKS Encryption**
 |Full disk encryption, key management
 
-|xref:storage/btrfs.adoc[**Btrfs**]
+|**Btrfs**
 |Snapshots, subvolumes, RAID
 
-|xref:storage/zfs.adoc[**ZFS**]
+|**ZFS**
 |Pools, datasets, snapshots, send/receive
 |===
 

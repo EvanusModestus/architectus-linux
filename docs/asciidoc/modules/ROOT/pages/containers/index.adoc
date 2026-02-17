@@ -11,13 +11,13 @@ Container runtimes, images, and orchestration on Linux.
 |===
 |Topic |Description
 
-|xref:containers/docker.adoc[**Docker**]
+|**Docker**
 |Installation, images, containers, compose
 
-|xref:containers/podman.adoc[**Podman**]
+|**Podman**
 |Rootless containers, pods, systemd integration
 
-|xref:containers/systemd-containers.adoc[**systemd Integration**]
+|**systemd Integration**
 |Running containers as services
 |===
 

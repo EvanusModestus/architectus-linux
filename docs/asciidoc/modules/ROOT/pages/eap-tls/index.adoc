@@ -11,19 +11,19 @@ Enterprise network access control using certificate-based authentication.
 |===
 |Topic |Description
 
-|xref:eap-tls/concepts.adoc[**Concepts**]
+|**Concepts**
 |802.1X architecture, EAP methods, RADIUS flow
 
-|xref:eap-tls/certificates.adoc[**Certificates**]
+|**Certificates**
 |PKI requirements, enrollment, renewal
 
-|xref:eap-tls/wpa-supplicant.adoc[**wpa_supplicant**]
+|**wpa_supplicant**
 |Configuration, profiles, debugging
 
-|xref:eap-tls/networkmanager.adoc[**NetworkManager**]
+|**NetworkManager**
 |GUI and CLI configuration, nmcli
 
-|xref:eap-tls/troubleshooting.adoc[**Troubleshooting**]
+|**Troubleshooting**
 |Common failures, packet captures, logs
 |===
 
@@ -106,5 +106,5 @@ systemctl enable --now wpa_supplicant-wired@eth0.service
 
 == Related
 
-* xref:security::pki/index.adoc[PKI] — Certificate authority infrastructure
+* xref:security::index.adoc[Security] — PKI and certificate infrastructure
 * xref:networking::index.adoc[Networking] — Network configuration
