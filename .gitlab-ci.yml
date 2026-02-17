@@ -1,0 +1,31 @@
+# GitLab CI/CD for Architectus Spoke Repository
+# Triggers hub rebuild when spoke content changes
+#
+# Required CI/CD Variables (Settings → CI/CD → Variables):
+#   HUB_TRIGGER_TOKEN  - Pipeline trigger token from architectus-docs project
+#   HUB_PROJECT_ID     - GitLab project ID for architectus-docs
+
+stages:
+  - notify
+
+variables:
+  GITLAB_API_URL: "https://gitlab.com/api/v4"
+
+notify-hub:
+  stage: notify
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - |
+      echo "Triggering hub rebuild..."
+      curl -s -X POST \
+        -F "token=${HUB_TRIGGER_TOKEN}" \
+        -F "ref=main" \
+        -F "variables[TRIGGERED_BY]=${CI_PROJECT_NAME}" \
+        "${GITLAB_API_URL}/projects/${HUB_PROJECT_ID}/trigger/pipeline"
+      echo "Hub rebuild triggered by ${CI_PROJECT_NAME}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - docs/**/*
