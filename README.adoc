@@ -1,0 +1,53 @@
+= Architectus Linux
+:url-site: https://docs.architectus.dev/linux
+
+Linux system administration, hardening, 802.1X/EAP-TLS, and automation.
+
+== Structure
+
+[source]
+----
+docs/asciidoc/
+├── antora.yml              # Component descriptor
+└── modules/ROOT/
+    ├── nav.adoc            # Navigation
+    └── pages/
+        ├── index.adoc      # Landing page
+        ├── administration/ # System admin
+        ├── hardening/      # Security hardening
+        ├── eap-tls/        # 802.1X certificate auth
+        ├── networking/     # Network configuration
+        ├── storage/        # Disk management
+        ├── containers/     # Docker, Podman
+        ├── automation/     # Scripting, Ansible
+        ├── distributions/  # Distro-specific
+        └── troubleshooting/
+----
+
+== Local Development
+
+This repo is a spoke in the Architectus hub-spoke architecture.
+
+To preview changes locally:
+
+[source,bash]
+----
+# From architectus-docs hub
+cd ~/atelier/_architectus/architectus-docs
+make serve
+----
+
+== Topics Covered
+
+* System Administration (systemd, users, packages, logging)
+* Hardening (SSH, firewall, SELinux/AppArmor, auditd)
+* 802.1X / EAP-TLS (certificate-based network auth)
+* Networking (ip, NetworkManager, DNS)
+* Storage (LVM, LUKS, Btrfs, ZFS)
+* Containers (Docker, Podman)
+* Automation (Bash, systemd timers, Ansible)
+* Distributions (Arch, RHEL, Debian, Fedora)
+
+== License
+
+UNLICENSED - Private documentation

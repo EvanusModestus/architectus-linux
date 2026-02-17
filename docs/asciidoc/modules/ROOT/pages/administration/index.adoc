@@ -1,0 +1,96 @@
+= System Administration
+:description: Linux system administration fundamentals
+:navtitle: Administration
+
+[.lead]
+Core system administration: systemd, users, packages, and logging.
+
+== Topics
+
+[cols="1,2"]
+|===
+|Topic |Description
+
+|xref:administration/systemd.adoc[**systemd**]
+|Service management, units, targets, timers
+
+|xref:administration/users-permissions.adoc[**Users & Permissions**]
+|User management, groups, sudo, ACLs
+
+|xref:administration/package-management.adoc[**Package Management**]
+|pacman, dnf, apt - installation, updates, cleanup
+
+|xref:administration/logging.adoc[**Logging**]
+|journald, rsyslog, log rotation, centralized logging
+|===
+
+== Key Concepts
+
+=== systemd
+
+systemd is the init system and service manager for modern Linux:
+
+* **Units** — configuration files describing services, mounts, timers
+* **Targets** — groups of units (like runlevels)
+* **Journal** — centralized logging via journald
+
+=== Package Management
+
+Each distribution family has its package manager:
+
+[tabs]
+======
+Arch::
++
+[source,bash]
+----
+pacman -Syu              # Update system
+pacman -S <package>      # Install
+pacman -Rs <package>     # Remove with deps
+pacman -Ss <query>       # Search
+----
+
+RHEL::
++
+[source,bash]
+----
+dnf upgrade              # Update system
+dnf install <package>    # Install
+dnf remove <package>     # Remove
+dnf search <query>       # Search
+----
+
+Debian::
++
+[source,bash]
+----
+apt update && apt upgrade  # Update system
+apt install <package>      # Install
+apt remove <package>       # Remove
+apt search <query>         # Search
+----
+======
+
+== Quick Reference
+
+=== Service Management
+
+[source,bash]
+----
+systemctl status <service>         # Check status
+systemctl start <service>          # Start
+systemctl stop <service>           # Stop
+systemctl restart <service>        # Restart
+systemctl enable <service>         # Enable at boot
+systemctl enable --now <service>   # Enable and start
+----
+
+=== User Management
+
+[source,bash]
+----
+useradd -m -G wheel <user>    # Create user with sudo
+passwd <user>                  # Set password
+usermod -aG <group> <user>    # Add to group
+id <user>                      # Show user info
+----

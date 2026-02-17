@@ -1,0 +1,91 @@
+= Containers
+:description: Container technologies on Linux - Docker, Podman
+:navtitle: Containers
+
+[.lead]
+Container runtimes, images, and orchestration on Linux.
+
+== Topics
+
+[cols="1,2"]
+|===
+|Topic |Description
+
+|xref:containers/docker.adoc[**Docker**]
+|Installation, images, containers, compose
+
+|xref:containers/podman.adoc[**Podman**]
+|Rootless containers, pods, systemd integration
+
+|xref:containers/systemd-containers.adoc[**systemd Integration**]
+|Running containers as services
+|===
+
+== Docker vs Podman
+
+[cols="1,1,1"]
+|===
+|Feature |Docker |Podman
+
+|Daemon
+|Yes (dockerd)
+|No (daemonless)
+
+|Root required
+|By default
+|Rootless by default
+
+|CLI compatibility
+|—
+|Docker-compatible
+
+|Compose
+|docker-compose
+|podman-compose
+
+|Pods
+|No
+|Yes (Kubernetes-style)
+|===
+
+== Quick Reference
+
+=== Docker
+
+[source,bash]
+----
+# Images
+docker pull nginx
+docker images
+docker rmi nginx
+
+# Containers
+docker run -d --name web -p 8080:80 nginx
+docker ps
+docker logs web
+docker exec -it web bash
+docker stop web
+docker rm web
+
+# Compose
+docker compose up -d
+docker compose down
+docker compose logs -f
+----
+
+=== Podman
+
+[source,bash]
+----
+# Same CLI as Docker
+podman pull nginx
+podman run -d --name web -p 8080:80 nginx
+
+# Generate systemd unit
+podman generate systemd --new --name web > ~/.config/systemd/user/container-web.service
+systemctl --user enable --now container-web.service
+
+# Pods
+podman pod create --name mypod -p 8080:80
+podman run -d --pod mypod nginx
+----

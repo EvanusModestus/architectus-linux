@@ -1,0 +1,99 @@
+= Distributions
+:description: Linux distribution-specific guidance
+:navtitle: Distributions
+
+[.lead]
+Distribution-specific configuration and best practices.
+
+== Topics
+
+[cols="1,2"]
+|===
+|Topic |Description
+
+|xref:distributions/arch.adoc[**Arch Linux**]
+|pacman, AUR, rolling release management
+
+|xref:distributions/rhel.adoc[**RHEL/Rocky/Alma**]
+|Enterprise Linux, subscriptions, EPEL
+
+|xref:distributions/debian.adoc[**Debian/Ubuntu**]
+|apt, PPAs, release upgrades
+
+|xref:distributions/fedora.adoc[**Fedora**]
+|dnf, COPR, version upgrades
+|===
+
+== Comparison
+
+[cols="1,1,1,1,1"]
+|===
+|Aspect |Arch |RHEL |Debian |Fedora
+
+|Release model
+|Rolling
+|Fixed (10 yr)
+|Fixed (5 yr)
+|Fixed (13 mo)
+
+|Package manager
+|pacman
+|dnf
+|apt
+|dnf
+
+|Init system
+|systemd
+|systemd
+|systemd
+|systemd
+
+|Default shell
+|bash
+|bash
+|bash
+|bash
+
+|SELinux
+|Optional
+|Enforcing
+|Optional
+|Enforcing
+|===
+
+== Choosing a Distribution
+
+=== Arch Linux
+
+Use when:
+
+* Personal workstation
+* Want latest software
+* Comfortable with manual configuration
+* Learning Linux deeply
+
+=== RHEL/Rocky/Alma
+
+Use when:
+
+* Production servers
+* Enterprise environment
+* Need long-term support
+* Compliance requirements
+
+=== Debian/Ubuntu
+
+Use when:
+
+* Servers requiring stability
+* Container base images
+* Broad hardware compatibility
+* Large package repository
+
+=== Fedora
+
+Use when:
+
+* Workstation with modern features
+* Testing RHEL-bound technologies
+* Development environment

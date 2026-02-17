@@ -1,0 +1,88 @@
+name: linux
+title: Linux
+version: '2026'
+start_page: ROOT:index.adoc
+nav:
+  - modules/ROOT/nav.adoc
+
+asciidoc:
+  attributes:
+    # ========================================================================
+    # DOCUMENT METADATA
+    # ========================================================================
+    doc-id: ARCHITECTUS-LINUX
+    revdate: '2026-02-17'
+    author: Architectus
+    icons: font
+    source-highlighter: highlight.js
+    experimental: ''
+    page-pagination: true
+
+    # ========================================================================
+    # SUPPORTED DISTRIBUTIONS
+    # ========================================================================
+    distro-arch: Arch Linux
+    distro-rhel: RHEL/Rocky/Alma
+    distro-fedora: Fedora
+    distro-debian: Debian
+    distro-ubuntu: Ubuntu
+    distro-alpine: Alpine
+
+    # ========================================================================
+    # PACKAGE MANAGERS
+    # ========================================================================
+    pkg-arch: pacman
+    pkg-rhel: dnf
+    pkg-debian: apt
+    pkg-alpine: apk
+
+    # ========================================================================
+    # COMMON SYSTEM PATHS
+    # ========================================================================
+    path-etc: /etc
+    path-ssl-certs: /etc/ssl/certs
+    path-ssl-private: /etc/ssl/private
+    path-systemd: /etc/systemd/system
+    path-udev: /etc/udev/rules.d
+    path-modprobe: /etc/modprobe.d
+    path-sysctl: /etc/sysctl.d
+    path-profile: /etc/profile.d
+    path-sudoers: /etc/sudoers.d
+    path-pam: /etc/pam.d
+    path-ssh: /etc/ssh
+    path-NetworkManager: /etc/NetworkManager
+    path-wpa-supplicant: /etc/wpa_supplicant
+
+    # ========================================================================
+    # LOG PATHS
+    # ========================================================================
+    path-log: /var/log
+    path-log-auth: /var/log/auth.log
+    path-log-syslog: /var/log/syslog
+    path-log-journal: /var/log/journal
+    path-log-audit: /var/log/audit/audit.log
+
+    # ========================================================================
+    # COMMON SERVICES
+    # ========================================================================
+    svc-sshd: sshd
+    svc-networkmanager: NetworkManager
+    svc-systemd-resolved: systemd-resolved
+    svc-firewalld: firewalld
+    svc-docker: docker
+    svc-containerd: containerd
+
+    # ========================================================================
+    # 802.1X / EAP-TLS
+    # ========================================================================
+    eap-method: EAP-TLS
+    radius-port: 1812
+    radius-acct-port: 1813
+
+    # ========================================================================
+    # SHELL VARIABLE PLACEHOLDERS
+    # ========================================================================
+    HOSTNAME: <hostname>
+    USER: <username>
+    INTERFACE: <interface>
+    DOMAIN: <domain>

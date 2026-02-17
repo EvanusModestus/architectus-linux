@@ -1,0 +1,91 @@
+= Automation
+:description: Linux automation - scripting, timers, configuration management
+:navtitle: Automation
+
+[.lead]
+Scripting, scheduling, and configuration management.
+
+== Topics
+
+[cols="1,2"]
+|===
+|Topic |Description
+
+|xref:automation/bash-scripting.adoc[**Bash Scripting**]
+|Best practices, error handling, common patterns
+
+|xref:automation/systemd-timers.adoc[**systemd Timers**]
+|Scheduled tasks, calendar expressions
+
+|xref:automation/ansible.adoc[**Ansible**]
+|Playbooks, roles, inventory, idempotency
+|===
+
+== systemd Timers
+
+systemd timers replace cron with better logging and dependency management.
+
+=== Example Timer
+
+[source,ini]
+----
+# /etc/systemd/system/backup.timer
+[Unit]
+Description=Daily backup timer
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+----
+
+[source,ini]
+----
+# /etc/systemd/system/backup.service
+[Unit]
+Description=Backup service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/backup.sh
+----
+
+=== Timer Commands
+
+[source,bash]
+----
+systemctl enable --now backup.timer
+systemctl list-timers
+systemctl status backup.timer
+journalctl -u backup.service
+----
+
+== Bash Best Practices
+
+[source,bash]
+----
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Fail on:
+# -e: any command error
+# -u: undefined variables
+# -o pipefail: pipe failures
+
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly LOG_FILE="/var/log/script.log"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"
+}
+
+main() {
+    log "Starting..."
+    # Your code here
+    log "Complete"
+}
+
+main "$@"
+----

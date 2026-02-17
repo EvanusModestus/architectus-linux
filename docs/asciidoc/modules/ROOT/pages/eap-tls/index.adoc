@@ -1,0 +1,110 @@
+= 802.1X / EAP-TLS
+:description: Certificate-based network authentication on Linux
+:navtitle: 802.1X / EAP-TLS
+
+[.lead]
+Enterprise network access control using certificate-based authentication.
+
+== Topics
+
+[cols="1,2"]
+|===
+|Topic |Description
+
+|xref:eap-tls/concepts.adoc[**Concepts**]
+|802.1X architecture, EAP methods, RADIUS flow
+
+|xref:eap-tls/certificates.adoc[**Certificates**]
+|PKI requirements, enrollment, renewal
+
+|xref:eap-tls/wpa-supplicant.adoc[**wpa_supplicant**]
+|Configuration, profiles, debugging
+
+|xref:eap-tls/networkmanager.adoc[**NetworkManager**]
+|GUI and CLI configuration, nmcli
+
+|xref:eap-tls/troubleshooting.adoc[**Troubleshooting**]
+|Common failures, packet captures, logs
+|===
+
+== Why EAP-TLS?
+
+EAP-TLS provides the strongest authentication:
+
+* **Mutual authentication** — both client and server prove identity
+* **No passwords** — certificates eliminate credential theft risk
+* **Device identity** — certificates tied to specific machines
+* **Revocation** — compromised certs can be instantly revoked
+
+== Architecture
+
+[source]
+----
+┌─────────────┐     802.1X      ┌─────────────┐     RADIUS      ┌─────────────┐
+│   Client    │◄──────────────►│   Switch/   │◄──────────────►│    ISE/     │
+│  (Linux)    │   EAP-TLS      │     AP      │   EAP-TLS      │   RADIUS    │
+└─────────────┘                └─────────────┘                └─────────────┘
+      │                                                              │
+      │              Certificate Validation                          │
+      └──────────────────────────────────────────────────────────────┘
+----
+
+== Requirements
+
+=== Certificates
+
+* **CA Certificate** — trust anchor for validating server
+* **Client Certificate** — proves client identity
+* **Private Key** — signs authentication handshake
+
+=== Configuration Files
+
+[cols="1,2"]
+|===
+|Path |Purpose
+
+|{path-wpa-supplicant}/wpa_supplicant.conf
+|wpa_supplicant configuration
+
+|{path-NetworkManager}/system-connections/
+|NetworkManager connection profiles
+
+|{path-ssl-certs}/
+|CA certificates
+
+|{path-ssl-private}/
+|Private keys (restricted permissions)
+|===
+
+== Quick Start
+
+=== wpa_supplicant
+
+[source,bash]
+----
+# /etc/wpa_supplicant/wpa_supplicant-wired.conf
+ctrl_interface=/run/wpa_supplicant
+eapol_version=2
+
+network={
+    key_mgmt=IEEE8021X
+    eap=TLS
+    identity="host/{HOSTNAME}.{DOMAIN}"
+    ca_cert="{path-ssl-certs}/ca-chain.pem"
+    client_cert="{path-ssl-certs}/client.pem"
+    private_key="{path-ssl-private}/client.key"
+    private_key_passwd=""
+}
+----
+
+=== Enable Service
+
+[source,bash]
+----
+systemctl enable --now wpa_supplicant-wired@eth0.service
+----
+
+== Related
+
+* xref:security::pki/index.adoc[PKI] — Certificate authority infrastructure
+* xref:networking::index.adoc[Networking] — Network configuration

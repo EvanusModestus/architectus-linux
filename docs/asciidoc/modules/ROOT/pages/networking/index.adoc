@@ -1,0 +1,98 @@
+= Networking
+:description: Linux networking configuration and troubleshooting
+:navtitle: Networking
+
+[.lead]
+Network configuration, troubleshooting, and advanced setups.
+
+== Topics
+
+[cols="1,2"]
+|===
+|Topic |Description
+
+|xref:networking/ip-command.adoc[**ip Command**]
+|Address, route, link, neighbor management
+
+|xref:networking/networkmanager.adoc[**NetworkManager**]
+|nmcli, connections, profiles, dispatchers
+
+|xref:networking/systemd-networkd.adoc[**systemd-networkd**]
+|Network units, links, netdevs
+
+|xref:networking/dns.adoc[**DNS**]
+|systemd-resolved, /etc/resolv.conf, split DNS
+
+|xref:networking/bonding-bridging.adoc[**Bonding & Bridging**]
+|Link aggregation, virtual bridges
+|===
+
+== Quick Reference
+
+=== ip Command
+
+[source,bash]
+----
+# Show interfaces
+ip addr show
+ip -br addr show
+
+# Show routes
+ip route show
+ip -6 route show
+
+# Show neighbors (ARP/NDP)
+ip neigh show
+
+# Add address
+ip addr add 192.168.1.10/24 dev eth0
+
+# Add route
+ip route add 10.0.0.0/8 via 192.168.1.1
+----
+
+=== NetworkManager (nmcli)
+
+[source,bash]
+----
+# List connections
+nmcli connection show
+
+# Show device status
+nmcli device status
+
+# Connect to WiFi
+nmcli device wifi connect <SSID> password <pass>
+
+# Create static connection
+nmcli connection add \
+    type ethernet \
+    con-name "static-eth0" \
+    ifname eth0 \
+    ipv4.method manual \
+    ipv4.addresses 192.168.1.10/24 \
+    ipv4.gateway 192.168.1.1 \
+    ipv4.dns "8.8.8.8,8.8.4.4"
+----
+
+=== Troubleshooting
+
+[source,bash]
+----
+# Check connectivity
+ping -c 4 8.8.8.8
+ping -c 4 google.com
+
+# DNS resolution
+resolvectl status
+dig google.com
+host google.com
+
+# Port connectivity
+ss -tlnp
+nc -zv <host> <port>
+
+# Trace route
+traceroute <host>
+mtr <host>
+----

@@ -1,0 +1,91 @@
+= Hardening
+:description: Linux security hardening
+:navtitle: Hardening
+
+[.lead]
+Defense in depth: SSH, firewalls, mandatory access control, and audit.
+
+== Topics
+
+[cols="1,2"]
+|===
+|Topic |Description
+
+|xref:hardening/ssh.adoc[**SSH Hardening**]
+|Key-based auth, disable root, port changes, fail2ban
+
+|xref:hardening/firewall.adoc[**Firewall**]
+|firewalld, nftables, zones, services, rich rules
+
+|xref:hardening/selinux.adoc[**SELinux**]
+|Contexts, booleans, troubleshooting, custom policies
+
+|xref:hardening/apparmor.adoc[**AppArmor**]
+|Profiles, enforcement modes, creating profiles
+
+|xref:hardening/auditd.adoc[**Audit Framework**]
+|auditd rules, ausearch, aureport, compliance
+
+|xref:hardening/cis-benchmarks.adoc[**CIS Benchmarks**]
+|Automated hardening, compliance scanning
+|===
+
+== Hardening Priorities
+
+[arabic]
+. **SSH** — Disable password auth, use keys, restrict users
+. **Firewall** — Default deny, explicit allows
+. **Updates** — Automated security patches
+. **MAC** — SELinux/AppArmor enforcement
+. **Audit** — Log everything, alert on anomalies
+. **Users** — Principle of least privilege
+
+== Quick Wins
+
+=== SSH Hardening
+
+[source,bash]
+----
+# {path-ssh}/sshd_config
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+AllowUsers <username>
+----
+
+=== Firewall (firewalld)
+
+[source,bash]
+----
+firewall-cmd --set-default-zone=drop
+firewall-cmd --zone=drop --add-service=ssh --permanent
+firewall-cmd --reload
+----
+
+=== Automatic Updates
+
+[tabs]
+======
+Arch::
++
+[source,bash]
+----
+# Use pacman hooks or unattended-upgrades-like solutions
+----
+
+RHEL::
++
+[source,bash]
+----
+dnf install dnf-automatic
+systemctl enable --now dnf-automatic-install.timer
+----
+
+Debian::
++
+[source,bash]
+----
+apt install unattended-upgrades
+dpkg-reconfigure -plow unattended-upgrades
+----
+======

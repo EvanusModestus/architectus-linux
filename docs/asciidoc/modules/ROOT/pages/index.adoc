@@ -1,0 +1,126 @@
+= Linux
+:description: Comprehensive Linux system administration, hardening, and automation
+:navtitle: Linux
+
+[.lead]
+Linux is the foundation. From workstations to servers, from containers to bare metal.
+
+== Core Competencies
+
+[cols="1,2"]
+|===
+|Domain |Coverage
+
+|**xref:administration/index.adoc[System Administration]**
+|systemd, users, permissions, package management, logging
+
+|**xref:hardening/index.adoc[Hardening]**
+|SSH, firewalls, SELinux/AppArmor, auditd, CIS benchmarks
+
+|**xref:eap-tls/index.adoc[802.1X / EAP-TLS]**
+|Certificate-based network authentication on Linux endpoints
+
+|**xref:networking/index.adoc[Networking]**
+|ip, NetworkManager, systemd-networkd, DNS, bonding
+
+|**xref:storage/index.adoc[Storage]**
+|LVM, filesystems, LUKS, Btrfs, ZFS
+
+|**xref:containers/index.adoc[Containers]**
+|Docker, Podman, rootless containers, systemd integration
+
+|**xref:automation/index.adoc[Automation]**
+|Bash, systemd timers, Ansible
+
+|**xref:distributions/index.adoc[Distributions]**
+|Arch, RHEL/Rocky, Debian/Ubuntu, Fedora
+|===
+
+== Approach
+
+Every guide follows these principles:
+
+1. **Concepts first** — understand the "why" before the "how"
+2. **Multi-distro** — commands for {distro-arch}, {distro-rhel}, {distro-debian}
+3. **Verification** — always confirm before and after changes
+4. **Security by default** — principle of least privilege
+
+== Distribution Coverage
+
+This documentation covers multiple distributions with tabbed examples:
+
+[cols="1,1,2"]
+|===
+|Distribution |Package Manager |Use Case
+
+|{distro-arch}
+|{pkg-arch}
+|Rolling release, bleeding edge, personal workstations
+
+|{distro-rhel}
+|{pkg-rhel}
+|Enterprise servers, long-term support, compliance
+
+|{distro-debian}
+|{pkg-debian}
+|Stable servers, containers, broad hardware support
+
+|{distro-fedora}
+|{pkg-rhel}
+|Workstations, testing RHEL-bound features
+|===
+
+== Quick References
+
+=== Essential Commands
+
+[source,bash]
+----
+# System information
+hostnamectl
+uname -a
+cat /etc/os-release
+
+# Services
+systemctl status <service>
+systemctl list-units --type=service --state=running
+journalctl -u <service> -f
+
+# Networking
+ip addr show
+ip route show
+ss -tlnp
+
+# Storage
+lsblk
+df -h
+mount | column -t
+----
+
+=== Important Paths
+
+[cols="1,2"]
+|===
+|Path |Purpose
+
+|{path-etc}
+|System configuration
+
+|{path-systemd}
+|Custom systemd units
+
+|{path-ssl-certs}
+|CA certificates
+
+|{path-log}
+|System logs
+
+|{path-ssh}
+|SSH server configuration
+|===
+
+== Related
+
+* xref:security::index.adoc[Security] — IAM, PKI, hardening frameworks
+* xref:automation::index.adoc[Automation] — Ansible, Terraform, CI/CD
+* xref:networking::index.adoc[Networking] — Enterprise network infrastructure

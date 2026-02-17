@@ -1,0 +1,88 @@
+= Troubleshooting
+:description: Linux troubleshooting guides
+:navtitle: Troubleshooting
+
+[.lead]
+Diagnosing and resolving common Linux issues.
+
+== Topics
+
+[cols="1,2"]
+|===
+|Topic |Description
+
+|xref:troubleshooting/boot-issues.adoc[**Boot Issues**]
+|GRUB, initramfs, systemd boot failures
+
+|xref:troubleshooting/networking.adoc[**Network Issues**]
+|Connectivity, DNS, routing problems
+
+|xref:troubleshooting/performance.adoc[**Performance**]
+|CPU, memory, I/O bottlenecks
+|===
+
+== General Approach
+
+[arabic]
+. **Check logs** — journalctl, dmesg, /var/log
+. **Check status** — systemctl status, process state
+. **Check resources** — CPU, memory, disk, network
+. **Check configuration** — recent changes, syntax errors
+. **Isolate** — binary search to find the cause
+
+== Essential Commands
+
+=== Logs
+
+[source,bash]
+----
+# System journal
+journalctl -xe              # Recent errors
+journalctl -b               # Current boot
+journalctl -b -1            # Previous boot
+journalctl -u <service>     # Specific service
+journalctl -f               # Follow
+
+# Kernel messages
+dmesg -T                    # With timestamps
+dmesg -T | tail -50         # Recent
+
+# Traditional logs
+tail -f /var/log/syslog
+tail -f /var/log/auth.log
+----
+
+=== System Status
+
+[source,bash]
+----
+# Services
+systemctl --failed
+systemctl status <service>
+
+# Processes
+top
+htop
+ps aux | grep <process>
+pgrep -a <pattern>
+----
+
+=== Resources
+
+[source,bash]
+----
+# CPU/Memory
+free -h
+vmstat 1
+sar -u 1 5
+
+# Disk
+df -h
+iostat -x 1
+iotop
+
+# Network
+ss -tlnp
+iftop
+nethogs
+----

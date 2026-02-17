@@ -1,0 +1,19 @@
+name: Notify Hub on Push
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger architectus-docs rebuild
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.HUB_DISPATCH_TOKEN }}
+          repository: EvanusModestus/architectus-docs
+          event-type: spoke-updated
+          client-payload: '{"spoke": "architectus-linux", "ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'

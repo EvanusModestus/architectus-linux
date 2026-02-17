@@ -1,0 +1,81 @@
+= Storage
+:description: Linux storage management - LVM, filesystems, encryption
+:navtitle: Storage
+
+[.lead]
+Disk management, logical volumes, filesystems, and encryption.
+
+== Topics
+
+[cols="1,2"]
+|===
+|Topic |Description
+
+|xref:storage/lvm.adoc[**LVM**]
+|Physical volumes, volume groups, logical volumes
+
+|xref:storage/filesystems.adoc[**Filesystems**]
+|ext4, XFS, creation, tuning, repair
+
+|xref:storage/encryption.adoc[**LUKS Encryption**]
+|Full disk encryption, key management
+
+|xref:storage/btrfs.adoc[**Btrfs**]
+|Snapshots, subvolumes, RAID
+
+|xref:storage/zfs.adoc[**ZFS**]
+|Pools, datasets, snapshots, send/receive
+|===
+
+== Quick Reference
+
+=== Disk Information
+
+[source,bash]
+----
+lsblk                    # Block devices
+lsblk -f                 # With filesystem info
+blkid                    # UUIDs and labels
+fdisk -l                 # Partition tables
+df -h                    # Mounted filesystems
+du -sh /path             # Directory size
+----
+
+=== LVM
+
+[source,bash]
+----
+# Physical volumes
+pvs                      # List PVs
+pvcreate /dev/sdb1       # Create PV
+
+# Volume groups
+vgs                      # List VGs
+vgcreate vg0 /dev/sdb1   # Create VG
+vgextend vg0 /dev/sdc1   # Extend VG
+
+# Logical volumes
+lvs                      # List LVs
+lvcreate -L 10G -n data vg0    # Create LV
+lvextend -L +5G /dev/vg0/data  # Extend LV
+resize2fs /dev/vg0/data        # Resize filesystem
+----
+
+=== LUKS Encryption
+
+[source,bash]
+----
+# Create encrypted volume
+cryptsetup luksFormat /dev/sdb1
+
+# Open (decrypt)
+cryptsetup luksOpen /dev/sdb1 data_crypt
+
+# Format and mount
+mkfs.ext4 /dev/mapper/data_crypt
+mount /dev/mapper/data_crypt /mnt/data
+
+# Close
+umount /mnt/data
+cryptsetup luksClose data_crypt
+----
