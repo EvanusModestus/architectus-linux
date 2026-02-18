@@ -1,0 +1,403 @@
+= Troubleshooting 802.1X
+:description: Battle-tested solutions for Linux 802.1X EAP-TLS authentication issues
+:navtitle: Troubleshooting
+
+Real problems, real solutions. These are the issues that waste hours if you don't know them.
+
+== Critical: iwd vs wpa_supplicant Conflict
+
+IMPORTANT: **iwd and wpa_supplicant cannot coexist for WiFi management.** This is the most common cause of inconsistent WiFi behavior on Linux.
+
+=== Symptoms
+
+* WiFi connects but requires manual DHCP every time
+* Interface state flaps between `COMPLETED` and `DISCONNECTED`
+* `wpa_state=INTERFACE_DISABLED` in `wpa_cli status`
+* `wlan0` interface disappears randomly
+* Authentication succeeds but connection drops seconds later
+
+=== Root Cause
+
+Both tools compete for WiFi interface control:
+
+* **iwd** — Modern WiFi daemon, good for PSK networks, installed by default on some distros
+* **wpa_supplicant** — Required for 802.1X EAP-TLS
+
+They cannot both manage the same interface.
+
+=== Solution
+
+Disable iwd completely:
+
+[source,bash]
+----
+# Stop iwd
+sudo systemctl stop iwd
+
+# Disable iwd from starting
+sudo systemctl disable iwd
+
+# Mask iwd to prevent accidental start
+sudo systemctl mask iwd
+
+# Verify iwd is disabled
+systemctl is-enabled iwd
+# Expected: masked
+----
+
+Then ensure wpa_supplicant is running:
+
+[source,bash,subs="attributes+"]
+----
+# Enable wpa_supplicant for WiFi
+sudo systemctl enable wpa_supplicant-wifi@wlan0
+sudo systemctl start wpa_supplicant-wifi@wlan0
+
+# Verify
+systemctl status wpa_supplicant-wifi@wlan0
+----
+
+=== Clean Network Stack
+
+After fixing the conflict, your network stack should look like:
+
+[cols="1,2,1"]
+|===
+|Layer |Tool |Status
+
+|802.1X Auth (Wired)
+|`wpa_supplicant-wired@{INTERFACE}`
+|enabled
+
+|802.1X Auth (WiFi)
+|`wpa_supplicant-wifi@wlan0`
+|enabled
+
+|DHCP
+|`dhcpcd` or `NetworkManager`
+|enabled
+
+|WiFi Management
+|`iwd`
+|**masked**
+|===
+
+== Interface Disappears
+
+When your network interface vanishes after driver issues or service conflicts:
+
+=== Symptoms
+
+* `ip link` doesn't show the interface
+* wpa_supplicant fails to start with "interface not found"
+* Interface appeared briefly then disappeared
+
+=== Solution (Intel WiFi)
+
+[source,bash]
+----
+# Check if interface exists
+ip link | grep wlan
+
+# If missing, reload Intel WiFi drivers
+sudo modprobe -r iwlmvm iwlwifi
+sudo modprobe iwlwifi
+
+# Verify interface returns
+ip link | grep wlan
+
+# Restart wpa_supplicant
+sudo systemctl restart wpa_supplicant-wifi@wlan0
+
+# Force reassociation
+sudo wpa_cli -i wlan0 reassociate
+----
+
+=== Solution (Other Drivers)
+
+[source,bash]
+----
+# Find your WiFi driver
+lspci -k | grep -A3 "Network controller"
+
+# Reload the driver (replace with your driver name)
+sudo modprobe -r <driver_name>
+sudo modprobe <driver_name>
+----
+
+== DHCP Not Working After Authentication
+
+Authentication succeeds but no IP address assigned.
+
+=== Symptoms
+
+* `wpa_cli status` shows `wpa_state=COMPLETED`
+* `ip addr show {INTERFACE}` shows no IP
+* `dhcpcd` reports "sending commands to dhcpcd process"
+
+=== Solution
+
+[source,bash,subs="attributes+"]
+----
+# Kill all existing dhcpcd processes
+sudo pkill -9 dhcpcd
+
+# Run dhcpcd with debug output
+sudo dhcpcd -d -B {INTERFACE}
+
+# Or background mode
+sudo dhcpcd {INTERFACE}
+
+# Verify IP assignment
+ip addr show {INTERFACE}
+----
+
+=== dhcpcd Flags
+
+[cols="1,2"]
+|===
+|Flag |Purpose
+
+|`-d`
+|Debug output
+
+|`-B`
+|Foreground (don't daemonize)
+
+|`-n`
+|Notify/rebind existing lease
+
+|`-k`
+|Kill existing dhcpcd on interface
+|===
+
+== DNS Resolution Failure
+
+Connected with IP but DNS doesn't work.
+
+=== Symptoms
+
+* `ping` by IP works
+* `ping` by hostname fails: "Temporary failure in name resolution"
+* `/etc/resolv.conf` is empty or stale
+
+=== Diagnosis
+
+[source,bash]
+----
+# Check resolv.conf
+cat /etc/resolv.conf
+
+# Check if dhcpcd is running
+pgrep -a dhcpcd
+# If nothing shows, dhcpcd is NOT running
+----
+
+=== Solution
+
+[source,bash,subs="attributes+"]
+----
+# Start dhcpcd for the interface
+sudo dhcpcd {INTERFACE}
+
+# Verify DNS is configured
+cat /etc/resolv.conf
+# Should show nameserver entries from DHCP
+----
+
+=== Why This Happens
+
+`dhcpcd.service` doesn't automatically start dhcpcd for WiFi interfaces after wpa_supplicant authenticates. When switching from wired to WiFi, `/etc/resolv.conf` becomes stale.
+
+=== Permanent Fix
+
+Option 1: Run dhcpcd without interface argument (manages all interfaces):
+[source,bash]
+----
+sudo dhcpcd
+----
+
+Option 2: Add systemd dependency:
+[source,ini]
+----
+# In wpa_supplicant-wifi@.service
+[Unit]
+Wants=dhcpcd@%i.service
+----
+
+== Certificate Issues
+
+=== Certificate Chain Incomplete
+
+**Symptom:** Authentication fails, RADIUS logs show "certificate verify failed"
+
+**Solution:** Ensure the full chain is available:
+
+[source,bash,subs="attributes+"]
+----
+# Create chain file (Root + Intermediate)
+cat root-ca.pem intermediate-ca.pem > {path-ssl-certs}/ca-chain.pem
+
+# Verify chain validates your cert
+openssl verify -CAfile {path-ssl-certs}/ca-chain.pem \
+    {path-ssl-certs}/{HOSTNAME}-eaptls.pem
+
+# Expected: certificate.pem: OK
+----
+
+=== EKU Mismatch
+
+**Symptom:** Certificate valid but authentication rejected
+
+**Check EKU:**
+[source,bash,subs="attributes+"]
+----
+openssl x509 -in {path-ssl-certs}/{HOSTNAME}-eaptls.pem -noout -text | grep -A2 "Extended Key"
+
+# Must include:
+# TLS Web Client Authentication (1.3.6.1.5.5.7.3.2)
+----
+
+If missing, reissue certificate with correct template.
+
+=== Certificate Expired
+
+[source,bash,subs="attributes+"]
+----
+# Check certificate dates
+openssl x509 -in {path-ssl-certs}/{HOSTNAME}-eaptls.pem -noout -dates
+
+# Shows:
+# notBefore=Jan  1 00:00:00 2025 GMT
+# notAfter=Jan  1 00:00:00 2026 GMT
+----
+
+=== Private Key Mismatch
+
+**Symptom:** "private key does not match certificate"
+
+**Verify key matches certificate:**
+[source,bash,subs="attributes+"]
+----
+# Get cert modulus
+openssl x509 -in {path-ssl-certs}/{HOSTNAME}-eaptls.pem -noout -modulus | md5sum
+
+# Get key modulus
+openssl rsa -in {path-ssl-private}/{HOSTNAME}-eaptls.key -noout -modulus | md5sum
+
+# Both MD5 hashes must match
+----
+
+== Common Issues Quick Reference
+
+[cols="2,3"]
+|===
+|Issue |Solution
+
+|Certificate chain incomplete
+|Import ROOT CA to RADIUS trust store
+
+|EKU mismatch
+|Reissue cert with Client Auth EKU
+
+|Private key password wrong
+|Verify `private_key_passwd` in config or use unencrypted key
+
+|Switch not sending RADIUS
+|Check AAA configuration on switch
+
+|Interface missing
+|Reload driver: `modprobe -r <driver> && modprobe <driver>`
+
+|iwd + wpa_supplicant conflict
+|Mask iwd: `systemctl mask iwd`
+
+|DHCP not working after auth
+|Kill stale dhcpcd: `pkill -9 dhcpcd && dhcpcd {INTERFACE}`
+
+|Identity format rejected
+|Match RADIUS server's expected format (CN, UPN, FQDN)
+|===
+
+== Log Analysis
+
+=== wpa_supplicant Logs
+
+[source,bash,subs="attributes+"]
+----
+# Follow logs in real-time
+sudo journalctl -u wpa_supplicant-wired@{INTERFACE} -f
+
+# Filter for EAP events
+sudo journalctl -u wpa_supplicant-wired@{INTERFACE} | grep -iE '(eap|tls|auth)'
+
+# Last 50 lines
+sudo journalctl -u wpa_supplicant-wired@{INTERFACE} -n 50
+----
+
+=== Key Log Messages
+
+[cols="1,2"]
+|===
+|Message |Meaning
+
+|`CTRL-EVENT-EAP-SUCCESS`
+|Authentication succeeded
+
+|`CTRL-EVENT-EAP-FAILURE`
+|Authentication failed (check RADIUS logs)
+
+|`CTRL-EVENT-CONNECTED`
+|Port authorized, network access granted
+
+|`CTRL-EVENT-DISCONNECTED`
+|Connection lost
+
+|`TLS: Certificate verification failed`
+|CA cert issue or expired cert
+
+|`EAP-TLS: Received Finished`
+|TLS handshake completed successfully
+|===
+
+== Force Reauthentication
+
+When testing changes:
+
+[source,bash,subs="attributes+"]
+----
+# From Linux - logoff then logon
+sudo wpa_cli -i {INTERFACE} logoff
+sudo wpa_cli -i {INTERFACE} logon
+
+# Check new status
+sudo wpa_cli -i {INTERFACE} status
+----
+
+== Packet Capture
+
+For deep debugging, capture the EAP exchange:
+
+[source,bash,subs="attributes+"]
+----
+# Capture EAPOL frames
+sudo tcpdump -i {INTERFACE} -w /tmp/eap-capture.pcap 'ether proto 0x888e'
+
+# Then trigger authentication
+sudo wpa_cli -i {INTERFACE} logoff && sudo wpa_cli -i {INTERFACE} logon
+
+# Stop capture (Ctrl+C) and analyze
+wireshark /tmp/eap-capture.pcap
+----
+
+Look for:
+- EAP-Request/Identity from switch
+- EAP-Response/Identity from client
+- TLS handshake messages
+- EAP-Success or EAP-Failure
+
+== Related
+
+* xref:eap-tls/concepts.adoc[802.1X Concepts]
+* xref:eap-tls/wpa-supplicant.adoc[wpa_supplicant Configuration]
+* xref:eap-tls/certificates.adoc[Certificate Setup]

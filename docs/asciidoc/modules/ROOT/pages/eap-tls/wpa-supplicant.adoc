@@ -1,0 +1,316 @@
+= wpa_supplicant Configuration
+:description: Configuring wpa_supplicant for 802.1X EAP-TLS on Linux
+:navtitle: wpa_supplicant
+
+wpa_supplicant is the standard Linux supplicant for 802.1X authentication. This guide covers wired EAP-TLS configuration with systemd integration.
+
+== Prerequisites
+
+Before configuring wpa_supplicant:
+
+* [ ] Client certificate issued and installed
+* [ ] Private key installed with correct permissions
+* [ ] CA certificate installed
+* [ ] Network interface identified
+
+== Configuration File
+
+=== Wired EAP-TLS Template
+
+Create the configuration file at `{path-wpa-supplicant}/wpa_supplicant-wired-{INTERFACE}.conf`:
+
+[source,ini,subs="attributes+"]
+----
+# 802.1X EAP-TLS Configuration for Wired Networks
+# Template - replace placeholders with actual values
+
+ctrl_interface=/run/wpa_supplicant
+ctrl_interface_group=wheel
+eapol_version=2
+ap_scan=0
+fast_reauth=1
+
+network={
+    key_mgmt=IEEE8021X
+    eap=TLS
+    identity="{HOSTNAME}.{DOMAIN}"
+    ca_cert="{path-ssl-certs}/ca-chain.pem"
+    client_cert="{path-ssl-certs}/{HOSTNAME}-eaptls.pem"
+    private_key="{path-ssl-private}/{HOSTNAME}-eaptls.key"
+    eapol_flags=0
+}
+----
+
+=== Parameter Reference
+
+[cols="1,2,2"]
+|===
+|Parameter |Value |Purpose
+
+|`ctrl_interface`
+|`/run/wpa_supplicant`
+|Socket path for wpa_cli control
+
+|`ctrl_interface_group`
+|`wheel` or `netdev`
+|Group allowed to use wpa_cli
+
+|`eapol_version`
+|`2`
+|EAPOL protocol version (use 2 for modern switches)
+
+|`ap_scan`
+|`0`
+|Disable AP scanning (wired networks)
+
+|`fast_reauth`
+|`1`
+|Enable fast reauthentication
+
+|`key_mgmt`
+|`IEEE8021X`
+|802.1X key management
+
+|`eap`
+|`TLS`
+|EAP method
+
+|`identity`
+|`hostname.domain`
+|Client identity sent to RADIUS
+
+|`ca_cert`
+|Path to CA certificate
+|Validates RADIUS server certificate
+
+|`client_cert`
+|Path to client certificate
+|Proves client identity
+
+|`private_key`
+|Path to private key
+|Signs authentication handshake
+
+|`eapol_flags`
+|`0`
+|Disable dynamic WEP (use 0 for wired)
+|===
+
+== File Permissions
+
+Private keys must be protected:
+
+[source,bash,subs="attributes+"]
+----
+# Secure the private key
+sudo chmod 600 {path-ssl-private}/{HOSTNAME}-eaptls.key
+sudo chown root:root {path-ssl-private}/{HOSTNAME}-eaptls.key
+
+# Secure the configuration file (contains key path)
+sudo chmod 600 {path-wpa-supplicant}/wpa_supplicant-wired-{INTERFACE}.conf
+sudo chown root:root {path-wpa-supplicant}/wpa_supplicant-wired-{INTERFACE}.conf
+
+# Verify permissions
+ls -la {path-ssl-private}/{HOSTNAME}-eaptls.key
+# Expected: -rw------- 1 root root
+----
+
+== systemd Service
+
+=== Create Service Unit
+
+Create a template service at `{path-systemd}/wpa_supplicant-wired@.service`:
+
+[source,ini,subs="attributes+"]
+----
+[Unit]
+Description=WPA supplicant for wired 802.1X (%I)
+Requires=sys-subsystem-net-devices-%i.device
+After=sys-subsystem-net-devices-%i.device
+Before=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/wpa_supplicant -c {path-wpa-supplicant}/wpa_supplicant-wired-%I.conf -i %I -D wired
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+----
+
+=== Enable and Start
+
+[source,bash,subs="attributes+"]
+----
+# Reload systemd
+sudo systemctl daemon-reload
+
+# Enable service for your interface
+sudo systemctl enable wpa_supplicant-wired@{INTERFACE}.service
+
+# Start service
+sudo systemctl start wpa_supplicant-wired@{INTERFACE}.service
+
+# Verify status
+systemctl status wpa_supplicant-wired@{INTERFACE}.service
+----
+
+== Manual Testing
+
+Before enabling the systemd service, test manually:
+
+[source,bash,subs="attributes+"]
+----
+# Run in foreground with debug output
+sudo wpa_supplicant -i {INTERFACE} \
+    -c {path-wpa-supplicant}/wpa_supplicant-wired-{INTERFACE}.conf \
+    -D wired \
+    -d
+
+# Expected output on success:
+# EAP-TLS: Received Finished
+# CTRL-EVENT-EAP-SUCCESS
+# CTRL-EVENT-CONNECTED
+----
+
+== wpa_cli Commands
+
+Use wpa_cli to interact with a running wpa_supplicant:
+
+[source,bash,subs="attributes+"]
+----
+# Check authentication status
+sudo wpa_cli -i {INTERFACE} status
+
+# Force reauthentication
+sudo wpa_cli -i {INTERFACE} logoff
+sudo wpa_cli -i {INTERFACE} logon
+
+# Reassociate
+sudo wpa_cli -i {INTERFACE} reassociate
+
+# View current configuration
+sudo wpa_cli -i {INTERFACE} list_networks
+----
+
+=== Status Output
+
+[source,bash]
+----
+$ sudo wpa_cli -i eth0 status
+bssid=00:00:00:00:00:00
+ssid=
+id=0
+mode=station
+wpa_state=COMPLETED          # <-- This means authenticated
+key_mgmt=IEEE8021X
+ip_address=10.x.x.x
+Supplicant PAE state=AUTHENTICATED
+EAP state=SUCCESS
+selectedMethod=13 (EAP-TLS)
+----
+
+Key indicators:
+- `wpa_state=COMPLETED` — authentication successful
+- `Supplicant PAE state=AUTHENTICATED` — port authorized
+- `EAP state=SUCCESS` — EAP exchange completed
+
+== Identity Format
+
+The `identity` field must match what your RADIUS server expects.
+
+[cols="1,2"]
+|===
+|Format |Example
+
+|Hostname only
+|`workstation01`
+
+|FQDN
+|`workstation01.corp.example.com`
+
+|UPN style
+|`host/workstation01.corp.example.com`
+
+|Machine account
+|`workstation01$@CORP.EXAMPLE.COM`
+|===
+
+Check your RADIUS server's certificate authentication profile for the expected format. Cisco ISE commonly uses the certificate Subject CN or SAN.
+
+== Certificate Chain
+
+The `ca_cert` should contain the full trust chain:
+
+[source,bash,subs="attributes+"]
+----
+# Create chain file (Root CA + Intermediate CA)
+cat root-ca.pem intermediate-ca.pem > {path-ssl-certs}/ca-chain.pem
+
+# Verify chain
+openssl verify -CAfile {path-ssl-certs}/ca-chain.pem \
+    {path-ssl-certs}/{HOSTNAME}-eaptls.pem
+----
+
+If verification fails, the RADIUS server certificate won't be trusted.
+
+== Network Stack Integration
+
+=== With dhcpcd
+
+After authentication, obtain IP via DHCP:
+
+[source,bash,subs="attributes+"]
+----
+# dhcpcd should start automatically after port authorization
+# If not, manually request:
+sudo dhcpcd {INTERFACE}
+----
+
+=== With NetworkManager
+
+If using NetworkManager alongside wpa_supplicant:
+
+[source,bash,subs="attributes+"]
+----
+# Tell NetworkManager to ignore the interface
+# Add to /etc/NetworkManager/conf.d/unmanaged.conf:
+[keyfile]
+unmanaged-devices=interface-name:{INTERFACE}
+
+# Restart NetworkManager
+sudo systemctl restart NetworkManager
+----
+
+== Logging
+
+=== View Authentication Logs
+
+[source,bash,subs="attributes+"]
+----
+# Follow wpa_supplicant logs
+sudo journalctl -u wpa_supplicant-wired@{INTERFACE} -f
+
+# Filter for EAP events
+sudo journalctl -u wpa_supplicant-wired@{INTERFACE} | grep -i eap
+----
+
+=== Enable Debug Logging
+
+For troubleshooting, increase verbosity in the service file:
+
+[source,ini]
+----
+ExecStart=/usr/bin/wpa_supplicant -c /etc/wpa_supplicant/... -i %I -D wired -dd
+----
+
+The `-dd` flag enables maximum debug output.
+
+== Related
+
+* xref:eap-tls/concepts.adoc[802.1X Concepts]
+* xref:eap-tls/certificates.adoc[Certificate Setup]
+* xref:eap-tls/troubleshooting.adoc[Troubleshooting]
+* xref:eap-tls/systemd-integration.adoc[systemd Integration]

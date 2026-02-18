@@ -11,20 +11,20 @@ Enterprise network access control using certificate-based authentication.
 |===
 |Topic |Description
 
-|**Concepts**
+|**xref:eap-tls/concepts.adoc[Concepts]**
 |802.1X architecture, EAP methods, RADIUS flow
 
 |**Certificates**
 |PKI requirements, enrollment, renewal
 
-|**wpa_supplicant**
-|Configuration, profiles, debugging
+|**xref:eap-tls/wpa-supplicant.adoc[wpa_supplicant]**
+|Configuration, profiles, systemd integration
 
 |**NetworkManager**
 |GUI and CLI configuration, nmcli
 
-|**Troubleshooting**
-|Common failures, packet captures, logs
+|**xref:eap-tls/troubleshooting.adoc[Troubleshooting]**
+|Battle-tested fixes for common failures
 |===
 
 == Why EAP-TLS?
