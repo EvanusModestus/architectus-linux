@@ -1,153 +1,149 @@
-# EAP-TLS Certificate Chain Architecture
-# Architectus Linux Documentation
+# EAP-TLS Certificate Chain
 
 direction: down
 
-# PKI Hierarchy
-root_ca: Root CA {
+# PKI Hierarchy - clean vertical flow
+root: Root CA {
   shape: rectangle
   style: {
-    fill: "#ffebee"
-    stroke: "#c62828"
-    stroke-width: 3
-    border-radius: 8
-    font-size: 16
+    fill: "#c62828"
+    font-color: white
     bold: true
-  }
-
-  validity: "Validity: 10-20 years" {
-    shape: text
-    style: { font-size: 11; italic: true }
-  }
-  offline: "OFFLINE - Air-gapped" {
-    shape: text
-    style: { font-size: 11; font-color: "#c62828"; bold: true }
+    border-radius: 4
   }
 }
 
-intermediate_ca: Intermediate CA {
+intermediate: Intermediate CA {
   shape: rectangle
   style: {
-    fill: "#fff8e1"
+    fill: "#f9a825"
+    font-color: white
+    bold: true
+    border-radius: 4
+  }
+}
+
+# Endpoint certs side by side
+certs: {
+  direction: right
+  style: {
+    fill: transparent
+    stroke: transparent
+  }
+
+  server: Server Cert {
+    shape: rectangle
+    style: {
+      fill: "#388e3c"
+      font-color: white
+      bold: true
+      border-radius: 4
+    }
+  }
+
+  client: Client Cert {
+    shape: rectangle
+    style: {
+      fill: "#388e3c"
+      font-color: white
+      bold: true
+      border-radius: 4
+    }
+  }
+}
+
+# Signing chain
+root -> intermediate: "Signs" {
+  style: {
+    stroke: "#c62828"
+    stroke-width: 2
+  }
+}
+
+intermediate -> certs: "Issues" {
+  style: {
     stroke: "#f9a825"
     stroke-width: 2
-    border-radius: 8
-    font-size: 14
-  }
-
-  validity: "Validity: 5-10 years" {
-    shape: text
-    style: { font-size: 11; italic: true }
-  }
-  issuing: "Issues endpoint certificates" {
-    shape: text
-    style: { font-size: 11 }
   }
 }
 
-root_ca -> intermediate_ca: "Signs" {
+# Trust endpoints side by side
+endpoints: {
+  direction: right
   style: {
-    stroke: "#c62828"
-    stroke-width: 2
-  }
-}
-
-# Endpoint Certificates
-endpoints: Endpoint Certificates {
-  style: {
-    fill: "#e8f5e9"
-    stroke: "#2e7d32"
-    border-radius: 8
+    fill: transparent
+    stroke: transparent
   }
 
-  server_cert: RADIUS Server Certificate {
+  ise: RADIUS Server {
     shape: rectangle
     style: {
-      fill: "#c8e6c9"
-      stroke: "#388e3c"
+      fill: "#7b1fa2"
+      font-color: white
+      bold: true
+      border-radius: 4
     }
-    eku: "EKU: Server Auth" {
-      shape: text
-      style: { font-size: 10 }
-    }
-    san: "SAN: ise.domain.com" {
-      shape: text
-      style: { font-size: 10 }
-    }
-  }
-
-  client_cert: Client Certificate {
-    shape: rectangle
-    style: {
-      fill: "#c8e6c9"
-      stroke: "#388e3c"
-    }
-    eku: "EKU: Client Auth" {
-      shape: text
-      style: { font-size: 10 }
-    }
-    san: "SAN: hostname.domain.com" {
-      shape: text
-      style: { font-size: 10 }
-    }
-  }
-}
-
-intermediate_ca -> endpoints.server_cert: "Issues" {
-  style: { stroke: "#f9a825" }
-}
-intermediate_ca -> endpoints.client_cert: "Issues" {
-  style: { stroke: "#f9a825" }
-}
-
-# Trust relationships
-trust: Trust Relationships {
-  shape: rectangle
-  style: {
-    fill: "#e3f2fd"
-    stroke: "#1565c0"
-    border-radius: 8
   }
 
   linux: Linux Client {
     shape: rectangle
-    style: { fill: "#bbdefb" }
-    trusts: "Trusts: CA Chain" {
-      shape: text
-      style: { font-size: 10 }
-    }
-    validates: "Validates: Server Cert" {
-      shape: text
-      style: { font-size: 10 }
-    }
-  }
-
-  ise: ISE/RADIUS {
-    shape: rectangle
-    style: { fill: "#bbdefb" }
-    trusts: "Trusts: CA Chain" {
-      shape: text
-      style: { font-size: 10 }
-    }
-    validates: "Validates: Client Cert" {
-      shape: text
-      style: { font-size: 10 }
+    style: {
+      fill: "#1565c0"
+      font-color: white
+      bold: true
+      border-radius: 4
     }
   }
 }
 
-endpoints.client_cert -> trust.linux: "Installed on" {
-  style: { stroke: "#388e3c"; stroke-dash: 3 }
-}
-endpoints.server_cert -> trust.ise: "Installed on" {
-  style: { stroke: "#388e3c"; stroke-dash: 3 }
+# Install relationships
+certs.server -> endpoints.ise: "Installed" {
+  style: {
+    stroke: "#7b1fa2"
+    stroke-dash: 3
+  }
 }
 
-# Mutual authentication
-trust.linux <-> trust.ise: "Mutual TLS Authentication" {
+certs.client -> endpoints.linux: "Installed" {
   style: {
     stroke: "#1565c0"
-    stroke-width: 3
+    stroke-dash: 3
+  }
+}
+
+# Mutual auth
+mutual: Mutual TLS Authentication {
+  shape: rectangle
+  style: {
+    fill: "#0d47a1"
+    font-color: white
     bold: true
+    border-radius: 4
+  }
+}
+
+endpoints -> mutual: "Both validate chain" {
+  style: {
+    stroke: "#0d47a1"
+    stroke-width: 2
+  }
+}
+
+# EKU annotations
+eku: {
+  direction: right
+  style: {
+    fill: transparent
+    stroke: transparent
+  }
+
+  server_eku: "id-kp-serverAuth" {
+    shape: text
+    style: { font-size: 10; italic: true; font-color: "#388e3c" }
+  }
+
+  client_eku: "id-kp-clientAuth" {
+    shape: text
+    style: { font-size: 10; italic: true; font-color: "#388e3c" }
   }
 }

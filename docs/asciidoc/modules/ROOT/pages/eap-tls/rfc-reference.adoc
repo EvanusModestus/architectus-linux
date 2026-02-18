@@ -1,0 +1,110 @@
+= RFC Reference
+:description: Core standards for 802.1X EAP-TLS implementation
+:navtitle: RFC Reference
+
+Understanding the underlying standards is essential for proper implementation and troubleshooting.
+
+== Core Standards
+
+[cols="1,2,3"]
+|===
+|RFC |Title |Relevance
+
+|**RFC 5216**
+|EAP-TLS Authentication Protocol
+|Certificate-based mutual authentication — the strongest EAP method
+
+|**RFC 3580**
+|IEEE 802.1X RADIUS Usage Guidelines
+|RADIUS attributes for 802.1X: VLAN assignment, session management
+
+|**RFC 5280**
+|X.509 PKI Certificate Profile
+|Certificate format, extensions, Extended Key Usage (EKU)
+
+|**RFC 5176**
+|Dynamic Authorization Extensions
+|Change of Authorization (CoA), Disconnect Messages — mid-session policy changes
+|===
+
+== Key RADIUS Attributes
+
+These attributes drive policy decisions and authorization results.
+
+[cols="1,1,3"]
+|===
+|Attribute |RFC |Purpose
+
+|**Calling-Station-Id (31)**
+|RFC 2865
+|MAC address of the endpoint — essential for endpoint identification
+
+|**Service-Type (6)**
+|RFC 2865
+|Request type: `Framed` (802.1X) vs `Call Check` (MAB)
+
+|**Tunnel-Private-Group-ID (81)**
+|RFC 2868
+|VLAN assignment — requires Tunnel-Type (64) and Tunnel-Medium-Type (65)
+
+|**Filter-Id (11)**
+|RFC 2865
+|Named ACL reference for downloadable policies
+|===
+
+== Protocol Flow
+
+The complete authentication spans multiple standards:
+
+1. **IEEE 802.1X** — EAPOL frames (Layer 2)
+2. **RFC 3748** — EAP negotiation
+3. **RFC 5216** — TLS handshake with certificates
+4. **RFC 3579** — EAP-over-RADIUS
+5. **RFC 2865** — Access-Accept with authorization
+6. **RFC 3580** — VLAN via Tunnel-* attributes
+
+== Certificate Requirements
+
+=== Client Certificate (RFC 5216)
+
+[cols="1,2"]
+|===
+|Field |Requirement
+
+|Extended Key Usage
+|id-kp-clientAuth (1.3.6.1.5.5.7.3.2)
+
+|Key Usage
+|Digital Signature
+|===
+
+=== Server Certificate (RFC 5216)
+
+[cols="1,2"]
+|===
+|Field |Requirement
+
+|Extended Key Usage
+|id-kp-serverAuth (1.3.6.1.5.5.7.3.1)
+
+|Key Usage
+|Digital Signature, Key Encipherment
+|===
+
+== Depth Available
+
+This page covers the essentials. Production implementations also leverage:
+
+* **RFC 7170** — EAP-TEAP for machine + user authentication chaining
+* **RFC 6960** — OCSP for real-time certificate revocation
+* **RFC 8446** — TLS 1.3 cryptographic improvements
+* Vendor-specific attributes for dACL, SGT, and URL redirect
+* Service-Type discrimination for MAB vs 802.1X routing
+
+The patterns in this documentation come from real enterprise deployments.
+
+== Related
+
+* xref:eap-tls/concepts.adoc[802.1X Concepts]
+* xref:eap-tls/certificates.adoc[Certificate Setup]
+* xref:eap-tls/troubleshooting.adoc[Troubleshooting]

@@ -10,6 +10,7 @@
 ** xref:eap-tls/wpa-supplicant.adoc[wpa_supplicant]
 ** xref:eap-tls/systemd-integration.adoc[systemd Integration]
 ** xref:eap-tls/troubleshooting.adoc[Troubleshooting]
+** xref:eap-tls/rfc-reference.adoc[RFC Reference]
 * xref:networking/index.adoc[Networking]
 * xref:storage/index.adoc[Storage]
 * xref:containers/index.adoc[Containers]

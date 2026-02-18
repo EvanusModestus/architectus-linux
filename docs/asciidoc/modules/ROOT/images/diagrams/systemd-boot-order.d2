@@ -1,175 +1,140 @@
 # systemd Service Dependencies for 802.1X
-# Architectus Linux Documentation
 
 direction: down
 
-# Boot sequence
-title: systemd Boot Order for 802.1X Authentication {
-  shape: text
+# Clean vertical flow
+device: sys-subsystem-net-devices-eth0.device {
+  shape: rectangle
   style: {
-    font-size: 18
+    fill: "#607d8b"
+    font-color: white
     bold: true
+    border-radius: 4
   }
 }
 
-# Hardware layer
-hardware: Hardware Layer {
+wpa: wpa_supplicant-wired@eth0 {
+  shape: rectangle
   style: {
-    fill: "#eceff1"
-    stroke: "#607d8b"
-    border-radius: 8
-  }
-
-  device: sys-subsystem-net-devices-eth0.device {
-    shape: rectangle
-    style: {
-      fill: "#cfd8dc"
-      font-size: 11
-    }
-    desc: "Interface exists" {
-      shape: text
-      style: { font-size: 10; italic: true }
-    }
+    fill: "#1565c0"
+    font-color: white
+    bold: true
+    border-radius: 4
   }
 }
 
-# Authentication layer
-auth: Authentication Layer {
+dhcp: dhcpcd@eth0 {
+  shape: rectangle
   style: {
-    fill: "#e3f2fd"
-    stroke: "#1565c0"
-    border-radius: 8
-  }
-
-  wpa: wpa_supplicant-wired@eth0.service {
-    shape: rectangle
-    style: {
-      fill: "#bbdefb"
-      font-size: 11
-    }
-    desc: "802.1X EAP-TLS" {
-      shape: text
-      style: { font-size: 10; italic: true }
-    }
+    fill: "#388e3c"
+    font-color: white
+    bold: true
+    border-radius: 4
   }
 }
 
-# Network layer
-network: Network Layer {
+network_target: network.target {
+  shape: rectangle
   style: {
-    fill: "#e8f5e9"
-    stroke: "#388e3c"
-    border-radius: 8
-  }
-
-  dhcp: dhcpcd@eth0.service {
-    shape: rectangle
-    style: {
-      fill: "#c8e6c9"
-      font-size: 11
-    }
-    desc: "IP assignment" {
-      shape: text
-      style: { font-size: 10; italic: true }
-    }
+    fill: "#e65100"
+    font-color: white
+    bold: true
+    border-radius: 4
   }
 }
 
-# Target
-target: Targets {
+online_target: network-online.target {
+  shape: rectangle
   style: {
-    fill: "#fff3e0"
-    stroke: "#e65100"
-    border-radius: 8
-  }
-
-  net_target: network.target {
-    shape: rectangle
-    style: {
-      fill: "#ffe0b2"
-      font-size: 11
-    }
-  }
-
-  online: network-online.target {
-    shape: rectangle
-    style: {
-      fill: "#ffcc80"
-      font-size: 11
-    }
-    desc: "Full connectivity" {
-      shape: text
-      style: { font-size: 10; italic: true }
-    }
+    fill: "#ff8f00"
+    font-color: white
+    bold: true
+    border-radius: 4
   }
 }
 
-# Dependencies
-hardware.device -> auth.wpa: "Requires, After" {
+# Dependency chain
+device -> wpa: "Requires, After" {
   style: {
     stroke: "#1565c0"
     stroke-width: 2
   }
 }
 
-auth.wpa -> network.dhcp: "Before (implicit)" {
+wpa -> dhcp: "After (port authorized)" {
   style: {
     stroke: "#388e3c"
     stroke-width: 2
   }
 }
 
-network.dhcp -> target.net_target: "Before" {
+dhcp -> network_target: "Before" {
   style: {
     stroke: "#e65100"
     stroke-width: 2
   }
 }
 
-target.net_target -> target.online: "Before" {
+network_target -> online_target: "Before" {
   style: {
-    stroke: "#e65100"
+    stroke: "#ff8f00"
+    stroke-width: 2
   }
 }
 
-# Conflict indication
-conflicts: Conflicts {
+# Conflict - positioned to the side
+iwd: iwd.service (MASKED) {
+  shape: rectangle
   style: {
-    fill: "#ffebee"
-    stroke: "#c62828"
-    border-radius: 8
-  }
-
-  iwd: iwd.service {
-    shape: rectangle
-    style: {
-      fill: "#ffcdd2"
-      font-size: 11
-    }
-    status: "MASKED" {
-      shape: text
-      style: {
-        font-size: 12
-        font-color: "#c62828"
-        bold: true
-      }
-    }
+    fill: "#c62828"
+    font-color: white
+    bold: true
+    border-radius: 4
   }
 }
 
-auth.wpa -> conflicts.iwd: "Conflicts" {
+wpa -> iwd: "Conflicts" {
   style: {
     stroke: "#c62828"
     stroke-dash: 5
+    stroke-width: 2
   }
 }
 
-# Timeline annotation
-timeline: "Boot Timeline: ~3-5 seconds to authenticated network" {
-  shape: text
-  style: {
-    font-size: 12
-    italic: true
-    font-color: "#616161"
+# Layer labels (legend)
+labels: {
+  direction: down
+
+  l1: Hardware {
+    shape: text
+    style: {
+      font-size: 12
+      italic: true
+      font-color: "#607d8b"
+    }
+  }
+  l2: Authentication {
+    shape: text
+    style: {
+      font-size: 12
+      italic: true
+      font-color: "#1565c0"
+    }
+  }
+  l3: Network {
+    shape: text
+    style: {
+      font-size: 12
+      italic: true
+      font-color: "#388e3c"
+    }
+  }
+  l4: Targets {
+    shape: text
+    style: {
+      font-size: 12
+      italic: true
+      font-color: "#e65100"
+    }
   }
 }
