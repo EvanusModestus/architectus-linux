@@ -25,34 +25,18 @@
 
 == Authentication Flow
 
-[source]
-----
-┌─────────────┐                      ┌─────────────┐                      ┌─────────────┐
-│  Supplicant │                      │Authenticator│                      │   RADIUS    │
-│   (Linux)   │                      │  (Switch)   │                      │   Server    │
-└──────┬──────┘                      └──────┬──────┘                      └──────┬──────┘
-       │                                    │                                    │
-       │──── EAPOL-Start ─────────────────►│                                    │
-       │                                    │                                    │
-       │◄─── EAP-Request/Identity ─────────│                                    │
-       │                                    │                                    │
-       │──── EAP-Response/Identity ───────►│                                    │
-       │                                    │                                    │
-       │                                    │── RADIUS Access-Request ─────────►│
-       │                                    │                                    │
-       │                                    │◄─ RADIUS Access-Challenge ────────│
-       │                                    │                                    │
-       │◄─── EAP-Request (TLS) ────────────│                                    │
-       │                                    │                                    │
-       │         ... TLS Handshake ...      │                                    │
-       │                                    │                                    │
-       │                                    │◄─ RADIUS Access-Accept ───────────│
-       │                                    │   (with VLAN, ACL assignments)     │
-       │                                    │                                    │
-       │◄─── EAP-Success ──────────────────│                                    │
-       │                                    │                                    │
-       │         PORT NOW AUTHORIZED        │                                    │
-----
+.802.1X EAP-TLS Authentication Sequence
+image::diagrams/eap-tls-auth-flow.svg[802.1X Authentication Flow,width=100%]
+
+The authentication sequence:
+
+1. **EAPOL-Start** — Client initiates authentication
+2. **EAP-Request/Identity** — Switch asks for identity
+3. **EAP-Response/Identity** — Client provides identity (certificate CN or SAN)
+4. **RADIUS Access-Request** — Switch forwards to authentication server
+5. **TLS Handshake** — Mutual certificate exchange and validation
+6. **RADIUS Access-Accept** — Server approves with VLAN/ACL assignments
+7. **EAP-Success** — Port authorized, network access granted
 
 == EAP Methods Compared
 
@@ -114,6 +98,9 @@ EAP-TLS is the only method that eliminates password-based attacks entirely.
 The trade-offs are operational, not security. If you can manage the PKI, EAP-TLS is always the right choice.
 
 == Certificate Requirements
+
+.PKI Certificate Chain Architecture
+image::diagrams/eap-tls-cert-chain.svg[Certificate Chain Architecture,width=100%]
 
 === Server Certificate (RADIUS)
 

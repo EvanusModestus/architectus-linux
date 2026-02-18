@@ -14,14 +14,14 @@ Enterprise network access control using certificate-based authentication.
 |**xref:eap-tls/concepts.adoc[Concepts]**
 |802.1X architecture, EAP methods, RADIUS flow
 
-|**Certificates**
+|**xref:eap-tls/certificates.adoc[Certificates]**
 |PKI requirements, enrollment, renewal
 
 |**xref:eap-tls/wpa-supplicant.adoc[wpa_supplicant]**
-|Configuration, profiles, systemd integration
+|Configuration and profiles
 
-|**NetworkManager**
-|GUI and CLI configuration, nmcli
+|**xref:eap-tls/systemd-integration.adoc[systemd Integration]**
+|Service management, boot order, DHCP coordination
 
 |**xref:eap-tls/troubleshooting.adoc[Troubleshooting]**
 |Battle-tested fixes for common failures
@@ -38,16 +38,10 @@ EAP-TLS provides the strongest authentication:
 
 == Architecture
 
-[source]
-----
-┌─────────────┐     802.1X      ┌─────────────┐     RADIUS      ┌─────────────┐
-│   Client    │◄──────────────►│   Switch/   │◄──────────────►│    ISE/     │
-│  (Linux)    │   EAP-TLS      │     AP      │   EAP-TLS      │   RADIUS    │
-└─────────────┘                └─────────────┘                └─────────────┘
-      │                                                              │
-      │              Certificate Validation                          │
-      └──────────────────────────────────────────────────────────────┘
-----
+.802.1X EAP-TLS Authentication Flow
+image::diagrams/eap-tls-auth-flow.svg[802.1X Authentication Flow,width=100%]
+
+The authentication flow involves three parties: the supplicant (Linux client), the authenticator (switch or access point), and the authentication server (ISE/RADIUS). EAP-TLS provides mutual certificate-based authentication.
 
 == Requirements
 

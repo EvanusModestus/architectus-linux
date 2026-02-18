@@ -1,0 +1,323 @@
+= systemd Integration
+:description: Configuring systemd services for 802.1X EAP-TLS authentication on Linux
+:navtitle: systemd Integration
+
+Proper systemd integration ensures 802.1X authentication starts automatically at boot and handles failures gracefully. This guide covers service templates, dependencies, and network ordering.
+
+== Service Architecture
+
+.systemd Boot Order for 802.1X Authentication
+image::diagrams/systemd-boot-order.svg[systemd Service Dependencies,width=100%]
+
+The boot sequence ensures proper ordering:
+
+1. **Hardware layer** — Interface device must exist
+2. **Authentication layer** — wpa_supplicant authenticates via 802.1X
+3. **Network layer** — DHCP requests IP after port authorization
+4. **Targets** — network.target and network-online.target for dependent services
+
+IMPORTANT: The `iwd` service conflicts with wpa_supplicant. It must be masked to prevent WiFi management conflicts.
+
+== Wired 802.1X Service
+
+=== Template Service
+
+Create the template at `{path-systemd}/wpa_supplicant-wired@.service`:
+
+[source,ini,subs="attributes+"]
+----
+[Unit]
+Description=WPA supplicant for wired 802.1X (%I)
+Documentation=man:wpa_supplicant(8)
+Requires=sys-subsystem-net-devices-%i.device
+After=sys-subsystem-net-devices-%i.device
+Before=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/wpa_supplicant \
+    -c {path-wpa-supplicant}/wpa_supplicant-wired-%I.conf \
+    -i %I \
+    -D wired
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+----
+
+=== Enable for Interface
+
+[source,bash,subs="attributes+"]
+----
+# Reload systemd
+sudo systemctl daemon-reload
+
+# Enable for specific interface
+sudo systemctl enable wpa_supplicant-wired@{INTERFACE}.service
+
+# Start immediately
+sudo systemctl start wpa_supplicant-wired@{INTERFACE}.service
+----
+
+== WiFi 802.1X Service
+
+=== Template Service
+
+Create the template at `{path-systemd}/wpa_supplicant-wifi@.service`:
+
+[source,ini,subs="attributes+"]
+----
+[Unit]
+Description=WPA supplicant for WiFi 802.1X (%I)
+Documentation=man:wpa_supplicant(8)
+Requires=sys-subsystem-net-devices-%i.device
+After=sys-subsystem-net-devices-%i.device
+Before=network.target
+Wants=network.target
+
+# Prevent iwd conflict
+Conflicts=iwd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/wpa_supplicant \
+    -c {path-wpa-supplicant}/wpa_supplicant-wifi-%I.conf \
+    -i %I \
+    -D nl80211,wext
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+----
+
+=== Enable for Interface
+
+[source,bash,subs="attributes+"]
+----
+sudo systemctl daemon-reload
+sudo systemctl enable wpa_supplicant-wifi@wlan0.service
+sudo systemctl start wpa_supplicant-wifi@wlan0.service
+----
+
+== DHCP Integration
+
+Authentication must complete before DHCP requests IP. Configure DHCP to wait for port authorization.
+
+=== dhcpcd with wpa_supplicant
+
+Create `{path-systemd}/dhcpcd@.service.d/wpa-supplicant.conf`:
+
+[source,ini,subs="attributes+"]
+----
+[Unit]
+# Wait for wpa_supplicant to authenticate
+After=wpa_supplicant-wired@%i.service
+Wants=wpa_supplicant-wired@%i.service
+----
+
+=== NetworkManager
+
+If using NetworkManager, ensure it doesn't conflict:
+
+[source,ini]
+----
+# /etc/NetworkManager/conf.d/unmanaged.conf
+[keyfile]
+unmanaged-devices=interface-name:eth0
+----
+
+Then reload:
+[source,bash]
+----
+sudo systemctl restart NetworkManager
+----
+
+== Service Status
+
+=== Check Running Services
+
+[source,bash,subs="attributes+"]
+----
+# Check wpa_supplicant status
+systemctl status wpa_supplicant-wired@{INTERFACE}
+
+# Check if enabled at boot
+systemctl is-enabled wpa_supplicant-wired@{INTERFACE}
+
+# List all wpa_supplicant services
+systemctl list-units 'wpa_supplicant*'
+----
+
+=== View Logs
+
+[source,bash,subs="attributes+"]
+----
+# Follow logs in real-time
+sudo journalctl -u wpa_supplicant-wired@{INTERFACE} -f
+
+# View boot logs
+sudo journalctl -u wpa_supplicant-wired@{INTERFACE} -b
+
+# Filter for EAP events
+sudo journalctl -u wpa_supplicant-wired@{INTERFACE} | grep -iE 'eap|tls|auth'
+----
+
+== Debug Mode
+
+=== Temporary Debug Service
+
+For troubleshooting, run with maximum verbosity:
+
+[source,bash,subs="attributes+"]
+----
+# Stop the service
+sudo systemctl stop wpa_supplicant-wired@{INTERFACE}
+
+# Run manually with debug
+sudo wpa_supplicant \
+    -c {path-wpa-supplicant}/wpa_supplicant-wired-{INTERFACE}.conf \
+    -i {INTERFACE} \
+    -D wired \
+    -dd
+
+# When done, restart service
+sudo systemctl start wpa_supplicant-wired@{INTERFACE}
+----
+
+=== Persistent Debug Logging
+
+Create override for persistent debug:
+
+[source,bash,subs="attributes+"]
+----
+sudo systemctl edit wpa_supplicant-wired@{INTERFACE}
+----
+
+Add:
+[source,ini,subs="attributes+"]
+----
+[Service]
+ExecStart=
+ExecStart=/usr/bin/wpa_supplicant \
+    -c {path-wpa-supplicant}/wpa_supplicant-wired-%I.conf \
+    -i %I \
+    -D wired \
+    -dd
+----
+
+== Boot Order
+
+=== Network Dependencies
+
+The correct boot sequence:
+
+1. `sys-subsystem-net-devices-%i.device` — interface exists
+2. `wpa_supplicant-wired@%i.service` — authenticates
+3. `dhcpcd@%i.service` or `NetworkManager` — gets IP
+4. `network-online.target` — network fully ready
+
+=== Verify Order
+
+[source,bash,subs="attributes+"]
+----
+# Show service dependencies
+systemctl list-dependencies wpa_supplicant-wired@{INTERFACE}
+
+# Show what requires this service
+systemctl list-dependencies --reverse wpa_supplicant-wired@{INTERFACE}
+----
+
+== Handling Failures
+
+=== Automatic Restart
+
+The service template includes:
+
+[source,ini]
+----
+Restart=on-failure
+RestartSec=5
+----
+
+This restarts wpa_supplicant 5 seconds after failure.
+
+=== Custom Failure Actions
+
+For notifications on failure, create `{path-systemd}/wpa_supplicant-wired@.service.d/notify.conf`:
+
+[source,ini]
+----
+[Unit]
+OnFailure=wpa-failure-notify@%i.service
+----
+
+With corresponding notification service:
+
+[source,ini,subs="attributes+"]
+----
+# {path-systemd}/wpa-failure-notify@.service
+[Unit]
+Description=Notify on wpa_supplicant failure for %I
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/notify-failure.sh wpa_supplicant %I
+----
+
+== Multiple Interfaces
+
+For systems with multiple wired interfaces requiring 802.1X:
+
+[source,bash,subs="attributes+"]
+----
+# Create config for each interface
+sudo cp {path-wpa-supplicant}/wpa_supplicant-wired-eth0.conf \
+       {path-wpa-supplicant}/wpa_supplicant-wired-eth1.conf
+
+# Enable service for each
+sudo systemctl enable wpa_supplicant-wired@eth0
+sudo systemctl enable wpa_supplicant-wired@eth1
+
+# Start all
+sudo systemctl start wpa_supplicant-wired@eth0
+sudo systemctl start wpa_supplicant-wired@eth1
+----
+
+== Disable Default Services
+
+Some distributions ship default wpa_supplicant services. Disable conflicts:
+
+[source,bash]
+----
+# Check for default services
+systemctl list-unit-files 'wpa_supplicant*'
+
+# Disable conflicting services
+sudo systemctl disable wpa_supplicant.service
+sudo systemctl mask wpa_supplicant.service
+
+# Disable iwd (conflicts with wpa_supplicant)
+sudo systemctl disable iwd
+sudo systemctl mask iwd
+----
+
+== Verification Checklist
+
+[%interactive]
+* [ ] Service template created at `{path-systemd}/wpa_supplicant-wired@.service`
+* [ ] Configuration file exists at `{path-wpa-supplicant}/wpa_supplicant-wired-{INTERFACE}.conf`
+* [ ] Service enabled: `systemctl is-enabled wpa_supplicant-wired@{INTERFACE}`
+* [ ] Service running: `systemctl is-active wpa_supplicant-wired@{INTERFACE}`
+* [ ] No conflicting services (iwd masked)
+* [ ] DHCP integration configured
+* [ ] Logs show successful authentication
+
+== Related
+
+* xref:eap-tls/concepts.adoc[802.1X Concepts]
+* xref:eap-tls/certificates.adoc[Certificate Setup]
+* xref:eap-tls/wpa-supplicant.adoc[wpa_supplicant Configuration]
+* xref:eap-tls/troubleshooting.adoc[Troubleshooting]

@@ -3,9 +3,12 @@
 .Topics
 * xref:administration/index.adoc[Administration]
 * xref:hardening/index.adoc[Hardening]
+* xref:terminal/index.adoc[Terminal Mastery]
 * xref:eap-tls/index.adoc[802.1X / EAP-TLS]
 ** xref:eap-tls/concepts.adoc[Concepts]
+** xref:eap-tls/certificates.adoc[Certificates]
 ** xref:eap-tls/wpa-supplicant.adoc[wpa_supplicant]
+** xref:eap-tls/systemd-integration.adoc[systemd Integration]
 ** xref:eap-tls/troubleshooting.adoc[Troubleshooting]
 * xref:networking/index.adoc[Networking]
 * xref:storage/index.adoc[Storage]

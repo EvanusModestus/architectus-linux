@@ -1,0 +1,344 @@
+= Certificate Setup
+:description: PKI requirements and certificate management for 802.1X EAP-TLS on Linux
+:navtitle: Certificates
+
+Certificate-based authentication requires proper PKI infrastructure. This guide covers the certificate requirements, installation, and management for Linux EAP-TLS clients.
+
+== Certificate Types Required
+
+EAP-TLS requires three certificate components on the client:
+
+[cols="1,2,2"]
+|===
+|Certificate |Purpose |Location
+
+|**CA Certificate**
+|Trust anchor for validating RADIUS server
+|`{path-ssl-certs}/ca-chain.pem`
+
+|**Client Certificate**
+|Proves client identity to RADIUS server
+|`{path-ssl-certs}/{HOSTNAME}-eaptls.pem`
+
+|**Private Key**
+|Signs the TLS handshake
+|`{path-ssl-private}/{HOSTNAME}-eaptls.key`
+|===
+
+== Certificate Requirements
+
+=== Client Certificate
+
+The client certificate must meet these requirements:
+
+[cols="1,2"]
+|===
+|Attribute |Requirement
+
+|Subject CN
+|Hostname or machine identifier
+
+|Subject Alternative Name (SAN)
+|DNS name, optionally UPN
+
+|Extended Key Usage (EKU)
+|Client Authentication (1.3.6.1.5.5.7.3.2)
+
+|Key Usage
+|Digital Signature
+
+|Key Size
+|RSA 2048+ or ECDSA P-256+
+
+|Validity
+|1 year typical
+|===
+
+=== CA Certificate Chain
+
+The CA chain file should include:
+
+* Root CA certificate
+* Intermediate CA certificate(s)
+
+The chain validates the RADIUS server certificate during the TLS handshake.
+
+== Obtaining Certificates
+
+=== From Internal PKI
+
+If your organization runs an internal PKI (Active Directory Certificate Services, HashiCorp Vault PKI, etc.):
+
+[source,bash,subs="attributes+"]
+----
+# Example: Request from Vault PKI
+vault write pki_int/issue/eap-tls-client \
+    common_name="{HOSTNAME}.{DOMAIN}" \
+    alt_names="{HOSTNAME}.{DOMAIN}" \
+    ttl="8760h" \
+    -format=json > /tmp/cert.json
+
+# Extract certificate
+jq -r '.data.certificate' /tmp/cert.json > {path-ssl-certs}/{HOSTNAME}-eaptls.pem
+
+# Extract private key
+jq -r '.data.private_key' /tmp/cert.json > {path-ssl-private}/{HOSTNAME}-eaptls.key
+
+# Extract CA chain
+jq -r '.data.ca_chain[]' /tmp/cert.json > {path-ssl-certs}/ca-chain.pem
+
+# Clean up
+rm /tmp/cert.json
+----
+
+=== From SCEP/EST
+
+For automated enrollment via SCEP or EST protocols:
+
+[source,bash,subs="attributes+"]
+----
+# Generate CSR
+openssl req -new -nodes \
+    -newkey rsa:2048 \
+    -keyout {path-ssl-private}/{HOSTNAME}-eaptls.key \
+    -out /tmp/{HOSTNAME}.csr \
+    -subj "/CN={HOSTNAME}.{DOMAIN}"
+
+# Submit CSR to SCEP server (example using sscep)
+sscep enroll \
+    -u https://scep.example.com/certsrv/mscep/mscep.dll \
+    -c /tmp/ca.pem \
+    -k {path-ssl-private}/{HOSTNAME}-eaptls.key \
+    -r /tmp/{HOSTNAME}.csr \
+    -l {path-ssl-certs}/{HOSTNAME}-eaptls.pem
+----
+
+=== Manual Certificate Request
+
+For manual enrollment:
+
+[source,bash,subs="attributes+"]
+----
+# Generate private key
+openssl genrsa -out {path-ssl-private}/{HOSTNAME}-eaptls.key 2048
+
+# Generate CSR
+openssl req -new \
+    -key {path-ssl-private}/{HOSTNAME}-eaptls.key \
+    -out /tmp/{HOSTNAME}.csr \
+    -subj "/CN={HOSTNAME}.{DOMAIN}"
+
+# View CSR for submission
+cat /tmp/{HOSTNAME}.csr
+----
+
+Submit the CSR to your CA administrator and receive the signed certificate.
+
+== Installing Certificates
+
+=== Directory Structure
+
+[source,bash,subs="attributes+"]
+----
+# Create directories if needed
+sudo mkdir -p {path-ssl-certs}
+sudo mkdir -p {path-ssl-private}
+----
+
+=== Copy Certificates
+
+[source,bash,subs="attributes+"]
+----
+# Copy CA chain
+sudo cp ca-chain.pem {path-ssl-certs}/ca-chain.pem
+
+# Copy client certificate
+sudo cp {HOSTNAME}-eaptls.pem {path-ssl-certs}/{HOSTNAME}-eaptls.pem
+
+# Copy private key
+sudo cp {HOSTNAME}-eaptls.key {path-ssl-private}/{HOSTNAME}-eaptls.key
+----
+
+=== Set Permissions
+
+Critical security step — private keys must be protected:
+
+[source,bash,subs="attributes+"]
+----
+# CA chain - readable
+sudo chmod 644 {path-ssl-certs}/ca-chain.pem
+sudo chown root:root {path-ssl-certs}/ca-chain.pem
+
+# Client certificate - readable
+sudo chmod 644 {path-ssl-certs}/{HOSTNAME}-eaptls.pem
+sudo chown root:root {path-ssl-certs}/{HOSTNAME}-eaptls.pem
+
+# Private key - root only
+sudo chmod 600 {path-ssl-private}/{HOSTNAME}-eaptls.key
+sudo chown root:root {path-ssl-private}/{HOSTNAME}-eaptls.key
+----
+
+=== Verify Permissions
+
+[source,bash,subs="attributes+"]
+----
+ls -la {path-ssl-private}/{HOSTNAME}-eaptls.key
+# Expected: -rw------- 1 root root
+
+ls -la {path-ssl-certs}/{HOSTNAME}-eaptls.pem
+# Expected: -rw-r--r-- 1 root root
+----
+
+== Verification
+
+=== Verify Certificate Chain
+
+[source,bash,subs="attributes+"]
+----
+# Verify client cert against CA chain
+openssl verify -CAfile {path-ssl-certs}/ca-chain.pem \
+    {path-ssl-certs}/{HOSTNAME}-eaptls.pem
+
+# Expected: /etc/ssl/certs/hostname-eaptls.pem: OK
+----
+
+=== Verify Key Matches Certificate
+
+[source,bash,subs="attributes+"]
+----
+# Get certificate modulus
+openssl x509 -in {path-ssl-certs}/{HOSTNAME}-eaptls.pem -noout -modulus | md5sum
+
+# Get key modulus
+openssl rsa -in {path-ssl-private}/{HOSTNAME}-eaptls.key -noout -modulus | md5sum
+
+# Both hashes must match
+----
+
+=== View Certificate Details
+
+[source,bash,subs="attributes+"]
+----
+# View certificate
+openssl x509 -in {path-ssl-certs}/{HOSTNAME}-eaptls.pem -noout -text
+
+# View just the important fields
+openssl x509 -in {path-ssl-certs}/{HOSTNAME}-eaptls.pem -noout \
+    -subject -issuer -dates -ext extendedKeyUsage,subjectAltName
+----
+
+=== Check Expiration
+
+[source,bash,subs="attributes+"]
+----
+# View certificate dates
+openssl x509 -in {path-ssl-certs}/{HOSTNAME}-eaptls.pem -noout -dates
+
+# Check if expired
+openssl x509 -in {path-ssl-certs}/{HOSTNAME}-eaptls.pem -noout -checkend 0
+# Returns 0 if valid, 1 if expired
+----
+
+== Certificate Renewal
+
+=== Monitor Expiration
+
+Create a systemd timer to check certificate expiration:
+
+[source,ini,subs="attributes+"]
+----
+# {path-systemd}/cert-check.service
+[Unit]
+Description=Check EAP-TLS certificate expiration
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cert-check.sh
+----
+
+[source,ini,subs="attributes+"]
+----
+# {path-systemd}/cert-check.timer
+[Unit]
+Description=Weekly certificate expiration check
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+----
+
+=== Check Script
+
+[source,bash,subs="attributes+"]
+----
+#!/bin/bash
+# /usr/local/bin/cert-check.sh
+
+CERT="{path-ssl-certs}/{HOSTNAME}-eaptls.pem"
+DAYS_WARNING=30
+
+# Check if cert expires within warning period
+if ! openssl x509 -in "$CERT" -noout -checkend $((DAYS_WARNING * 86400)); then
+    echo "WARNING: Certificate expires within $DAYS_WARNING days"
+    # Add notification logic (email, logging, etc.)
+fi
+----
+
+=== Renewal Process
+
+1. Generate new CSR or request new certificate from PKI
+2. Install new certificate (same paths)
+3. Restart wpa_supplicant:
+
+[source,bash,subs="attributes+"]
+----
+sudo systemctl restart wpa_supplicant-wired@{INTERFACE}
+----
+
+== Troubleshooting
+
+=== Certificate Chain Incomplete
+
+**Symptom:** RADIUS rejects with "certificate verify failed"
+
+**Solution:** Ensure ca-chain.pem contains full chain:
+
+[source,bash,subs="attributes+"]
+----
+# View chain
+openssl crl2pkcs7 -nocrl -certfile {path-ssl-certs}/ca-chain.pem | \
+    openssl pkcs7 -print_certs -noout
+
+# Should show: Root CA, then Intermediate CA(s)
+----
+
+=== Wrong EKU
+
+**Symptom:** Certificate valid but authentication rejected
+
+**Check:**
+[source,bash,subs="attributes+"]
+----
+openssl x509 -in {path-ssl-certs}/{HOSTNAME}-eaptls.pem -noout -text | grep -A2 "Extended Key"
+# Must show: TLS Web Client Authentication
+----
+
+=== Permission Denied
+
+**Symptom:** wpa_supplicant fails with "Could not read private key"
+
+**Fix:**
+[source,bash,subs="attributes+"]
+----
+sudo chmod 600 {path-ssl-private}/{HOSTNAME}-eaptls.key
+sudo chown root:root {path-ssl-private}/{HOSTNAME}-eaptls.key
+----
+
+== Related
+
+* xref:eap-tls/concepts.adoc[802.1X Concepts]
+* xref:eap-tls/wpa-supplicant.adoc[wpa_supplicant Configuration]
+* xref:eap-tls/troubleshooting.adoc[Troubleshooting]

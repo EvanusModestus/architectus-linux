@@ -1,0 +1,155 @@
+# 802.1X EAP-TLS Authentication Flow
+# Architectus Linux Documentation
+
+direction: right
+
+# Main entities
+supplicant: Linux Client {
+  shape: rectangle
+  style: {
+    fill: "#e3f2fd"
+    stroke: "#1565c0"
+    stroke-width: 2
+    border-radius: 8
+  }
+
+  wpa: wpa_supplicant {
+    shape: rectangle
+    style: {
+      fill: "#bbdefb"
+    }
+  }
+  cert: Client Cert + Key {
+    shape: rectangle
+    style: {
+      fill: "#c8e6c9"
+    }
+  }
+}
+
+authenticator: Network Switch {
+  shape: rectangle
+  style: {
+    fill: "#fff3e0"
+    stroke: "#e65100"
+    stroke-width: 2
+    border-radius: 8
+  }
+
+  port: "Port State" {
+    shape: rectangle
+    style: {
+      fill: "#ffe0b2"
+    }
+  }
+  eapol: EAPOL {
+    shape: rectangle
+    style: {
+      fill: "#ffcc80"
+    }
+  }
+}
+
+radius: ISE / RADIUS {
+  shape: rectangle
+  style: {
+    fill: "#f3e5f5"
+    stroke: "#7b1fa2"
+    stroke-width: 2
+    border-radius: 8
+  }
+
+  policy: Policy Engine {
+    shape: rectangle
+    style: {
+      fill: "#e1bee7"
+    }
+  }
+  authz: Authorization {
+    shape: rectangle
+    style: {
+      fill: "#ce93d8"
+    }
+  }
+}
+
+# Protocol connections
+supplicant -> authenticator: "EAPOL\n(Layer 2)" {
+  style: {
+    stroke: "#1565c0"
+    stroke-width: 3
+  }
+}
+
+authenticator -> radius: "RADIUS\n(UDP 1812)" {
+  style: {
+    stroke: "#7b1fa2"
+    stroke-width: 3
+  }
+}
+
+# Authentication sequence as separate element
+sequence: Authentication Sequence {
+  shape: rectangle
+  style: {
+    fill: "#fafafa"
+    stroke: "#9e9e9e"
+    border-radius: 8
+  }
+
+  step1: "1. EAPOL-Start" {
+    style: { fill: "#e3f2fd" }
+  }
+  step2: "2. EAP-Request/Identity" {
+    style: { fill: "#fff3e0" }
+  }
+  step3: "3. EAP-Response/Identity" {
+    style: { fill: "#e3f2fd" }
+  }
+  step4: "4. RADIUS Access-Request" {
+    style: { fill: "#fff3e0" }
+  }
+  step5: "5. TLS Handshake" {
+    style: { fill: "#f3e5f5" }
+  }
+  step6: "6. Certificate Exchange" {
+    style: { fill: "#c8e6c9" }
+  }
+  step7: "7. Access-Accept + VLAN" {
+    style: { fill: "#f3e5f5" }
+  }
+  step8: "8. EAP-Success" {
+    style: { fill: "#c8e6c9" }
+  }
+
+  step1 -> step2 -> step3 -> step4 -> step5 -> step6 -> step7 -> step8
+}
+
+# Result
+result: Port Authorized {
+  shape: rectangle
+  style: {
+    fill: "#c8e6c9"
+    stroke: "#2e7d32"
+    stroke-width: 2
+    border-radius: 8
+    bold: true
+    font-size: 16
+  }
+
+  vlan: "VLAN Assignment" {
+    shape: text
+    style: { font-size: 12 }
+  }
+  acl: "ACL Applied" {
+    shape: text
+    style: { font-size: 12 }
+  }
+}
+
+sequence -> result: "Success" {
+  style: {
+    stroke: "#2e7d32"
+    stroke-width: 2
+  }
+}

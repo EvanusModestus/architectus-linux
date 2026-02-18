@@ -1,0 +1,236 @@
+= Terminal Mastery
+:description: Command-line patterns for security professionals and power users
+:navtitle: Terminal
+
+[.lead]
+The terminal is not a tool - it's a *language*. Each command is a word, pipes are grammar, and one-liners are sentences.
+
+== Philosophy
+
+[quote]
+____
+Write programs that do one thing and do it well. Write programs to work together.
+____
+-- Doug McIlroy
+
+This documentation reflects years of enterprise Linux administration, security operations, and automation. Every pattern here is battle-tested.
+
+== The Three Streams
+
+Every Unix process has three standard file descriptors. Understanding these is *fundamental*.
+
+[cols="1,1,1,3"]
+|===
+| Stream | FD | Default | Purpose
+
+| **stdin**
+| 0
+| Keyboard
+| Input to the program
+
+| **stdout**
+| 1
+| Terminal
+| Normal output (results)
+
+| **stderr**
+| 2
+| Terminal
+| Errors, warnings, diagnostics
+|===
+
+=== Redirection Patterns
+
+[source,bash]
+----
+# Separate success and failure output
+find /etc -name "*.conf" > found.txt 2> errors.txt
+
+# Log everything with timestamps
+./script.sh 2>&1 | while read line; do
+    echo "$(date '+%Y-%m-%d %H:%M:%S') $line"
+done | tee -a script.log
+
+# Capture exit code AND output
+output=$(command 2>&1)
+exit_code=$?
+----
+
+== AWK: The Power Tool
+
+AWK is not just a command - it's a *programming language* optimized for text processing.
+
+=== Field Processing
+
+[source,bash]
+----
+# Field separator (-F)
+awk -F':' '{ print $1 }' /etc/passwd        # Split on colon
+awk -F',' '{ print $2 }' data.csv           # Split on comma
+
+# Built-in variables
+awk '{ print NR, NF, $0 }' file             # Line number, field count, line
+awk '{ print $NF }' file                    # Last field
+awk '{ print $(NF-1) }' file                # Second-to-last field
+----
+
+=== Security One-Liners
+
+[source,bash]
+----
+# Top 10 IPs by request count
+awk '{print $1}' access.log | sort | uniq -c | sort -rn | head -10
+
+# Failed SSH attempts by IP
+awk '/Failed password/ {
+    for(i=1;i<=NF;i++) if($i=="from") print $(i+1)
+}' /var/log/auth.log | sort | uniq -c | sort -rn
+
+# Bandwidth by IP (Apache combined log)
+awk '{ip[$1]+=$10} END {for(i in ip) print ip[i], i}' access.log | sort -rn | head
+
+# HTTP response code distribution
+awk '{codes[$9]++} END {for(c in codes) print c, codes[c]}' access.log | sort
+----
+
+== SED: Stream Editor
+
+Sed transforms text in-flight. Search, replace, delete, insert.
+
+[source,bash]
+----
+# In-place editing with backup
+sed -i.bak 's/foo/bar/g' file
+
+# Remove comments and empty lines
+sed '/^#/d; /^$/d' config.conf
+
+# Obfuscate IP addresses in logs
+sed -E 's/([0-9]{1,3}\.){3}[0-9]{1,3}/X.X.X.X/g' access.log
+
+# Replace sensitive data
+sed 's/password=.*/password=REDACTED/g' config.log
+----
+
+== GREP for Security
+
+[source,bash]
+----
+# Find potential credentials
+grep -rn "password\|passwd\|secret\|api[_-]key" /path
+
+# Find IP addresses
+grep -oE "([0-9]{1,3}\.){3}[0-9]{1,3}" file
+
+# Find private keys
+grep -r "BEGIN.*PRIVATE KEY" /path
+
+# Perl regex: extract values after pattern
+grep -oP "(?<=password=)\w+" file
+----
+
+== FIND: Security Scanning
+
+[source,bash]
+----
+# World-writable files (security risk)
+find / -type f -perm -002 2>/dev/null
+
+# SUID/SGID binaries (privilege escalation vectors)
+find / -type f \( -perm -4000 -o -perm -2000 \) 2>/dev/null
+
+# Files modified in last 24 hours (incident response)
+find / -type f -mtime -1 2>/dev/null
+
+# Files owned by nobody (suspicious)
+find / -nouser -o -nogroup 2>/dev/null
+----
+
+== Power Combinations
+
+These one-liners combine multiple tools for maximum effect.
+
+=== Log Analysis
+
+[source,bash]
+----
+# Top 10 IPs with failed SSH logins
+grep "Failed password" /var/log/auth.log | \
+    awk '{print $(NF-3)}' | sort | uniq -c | sort -rn | head -10
+
+# Requests per hour (Apache)
+awk -F'[\\[:]' '{print $2":"$3}' access.log | sort | uniq -c | sort -rn
+
+# 404 errors with referring URLs
+awk '$9 == 404 {print $11, $7}' access.log | sort | uniq -c | sort -rn
+
+# Real-time monitoring with color
+tail -f access.log | awk '
+    $9 >= 500 {print "\033[31m" $0 "\033[0m"; next}
+    $9 >= 400 {print "\033[33m" $0 "\033[0m"; next}
+    {print}'
+----
+
+=== Network Analysis
+
+[source,bash]
+----
+# All listening ports with process names
+ss -tlnp | awk 'NR>1 {print $4, $NF}' | sed 's/.*://' | sort -n
+
+# Established connections by remote IP
+ss -tn | awk 'NR>1 {print $5}' | cut -d: -f1 | sort | uniq -c | sort -rn
+
+# ARP table analysis
+arp -a | awk '{print $2, $4}' | tr -d '()'
+----
+
+== Quick Reference
+
+=== Special Variables
+
+[cols="1,3"]
+|===
+| Variable | Description
+
+| `$?` | Exit code of last command
+| `$$` | Current shell PID
+| `$!` | PID of last background process
+| `$@` | All parameters (separate words)
+| `$#` | Number of parameters
+| `$_` | Last argument of previous command
+|===
+
+=== Exit Codes
+
+[cols="1,3"]
+|===
+| Code | Meaning
+
+| 0 | Success
+| 1 | General error
+| 126 | Permission denied (cannot execute)
+| 127 | Command not found
+| 128+n | Fatal signal n (e.g., 130 = Ctrl+C)
+|===
+
+== Depth Available
+
+This page provides a taste of terminal mastery. The complete reference covers:
+
+* Comprehensive AWK programming (functions, arrays, math)
+* Advanced sed patterns and in-place editing
+* XARGS for parallel execution
+* CURL for HTTP analysis and security testing
+* DIG for DNS interrogation and recon
+* Netcat for network debugging
+* Bash scripting patterns (loops, arrays, conditionals)
+* Data extraction techniques
+
+These patterns come from years of enterprise administration, security operations, and incident response.
+
+== Related
+
+* xref:hardening/index.adoc[System Hardening]
+* xref:automation/index.adoc[Automation]
+* xref:troubleshooting/index.adoc[Troubleshooting]

@@ -17,8 +17,11 @@ Linux is the foundation. From workstations to servers, from containers to bare m
 |**xref:hardening/index.adoc[Hardening]**
 |SSH, firewalls, SELinux/AppArmor, auditd, CIS benchmarks
 
+|**xref:terminal/index.adoc[Terminal Mastery]**
+|AWK, sed, grep, find, xargs — power user patterns for security and administration
+
 |**xref:eap-tls/index.adoc[802.1X / EAP-TLS]**
-|Certificate-based network authentication on Linux endpoints
+|Certificate-based network authentication, Cisco ISE integration, enterprise NAC
 
 |**xref:networking/index.adoc[Networking]**
 |ip, NetworkManager, systemd-networkd, DNS, bonding
@@ -118,6 +121,17 @@ mount | column -t
 |{path-ssh}
 |SSH server configuration
 |===
+
+== Enterprise Experience
+
+This documentation reflects real-world implementation experience:
+
+* **802.1X / Network Access Control** — Production deployments with Cisco ISE, certificate-based authentication for Linux endpoints in enterprise environments
+* **PKI Integration** — End-to-end certificate lifecycle: enrollment, deployment, renewal, revocation
+* **systemd Architecture** — Service dependencies, boot ordering, failure handling for authentication services
+* **Troubleshooting** — Battle-tested solutions from production incident response
+
+The patterns here come from solving real problems, not theoretical exercises.
 
 == Related
 

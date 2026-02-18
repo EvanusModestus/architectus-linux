@@ -1,0 +1,153 @@
+# EAP-TLS Certificate Chain Architecture
+# Architectus Linux Documentation
+
+direction: down
+
+# PKI Hierarchy
+root_ca: Root CA {
+  shape: rectangle
+  style: {
+    fill: "#ffebee"
+    stroke: "#c62828"
+    stroke-width: 3
+    border-radius: 8
+    font-size: 16
+    bold: true
+  }
+
+  validity: "Validity: 10-20 years" {
+    shape: text
+    style: { font-size: 11; italic: true }
+  }
+  offline: "OFFLINE - Air-gapped" {
+    shape: text
+    style: { font-size: 11; font-color: "#c62828"; bold: true }
+  }
+}
+
+intermediate_ca: Intermediate CA {
+  shape: rectangle
+  style: {
+    fill: "#fff8e1"
+    stroke: "#f9a825"
+    stroke-width: 2
+    border-radius: 8
+    font-size: 14
+  }
+
+  validity: "Validity: 5-10 years" {
+    shape: text
+    style: { font-size: 11; italic: true }
+  }
+  issuing: "Issues endpoint certificates" {
+    shape: text
+    style: { font-size: 11 }
+  }
+}
+
+root_ca -> intermediate_ca: "Signs" {
+  style: {
+    stroke: "#c62828"
+    stroke-width: 2
+  }
+}
+
+# Endpoint Certificates
+endpoints: Endpoint Certificates {
+  style: {
+    fill: "#e8f5e9"
+    stroke: "#2e7d32"
+    border-radius: 8
+  }
+
+  server_cert: RADIUS Server Certificate {
+    shape: rectangle
+    style: {
+      fill: "#c8e6c9"
+      stroke: "#388e3c"
+    }
+    eku: "EKU: Server Auth" {
+      shape: text
+      style: { font-size: 10 }
+    }
+    san: "SAN: ise.domain.com" {
+      shape: text
+      style: { font-size: 10 }
+    }
+  }
+
+  client_cert: Client Certificate {
+    shape: rectangle
+    style: {
+      fill: "#c8e6c9"
+      stroke: "#388e3c"
+    }
+    eku: "EKU: Client Auth" {
+      shape: text
+      style: { font-size: 10 }
+    }
+    san: "SAN: hostname.domain.com" {
+      shape: text
+      style: { font-size: 10 }
+    }
+  }
+}
+
+intermediate_ca -> endpoints.server_cert: "Issues" {
+  style: { stroke: "#f9a825" }
+}
+intermediate_ca -> endpoints.client_cert: "Issues" {
+  style: { stroke: "#f9a825" }
+}
+
+# Trust relationships
+trust: Trust Relationships {
+  shape: rectangle
+  style: {
+    fill: "#e3f2fd"
+    stroke: "#1565c0"
+    border-radius: 8
+  }
+
+  linux: Linux Client {
+    shape: rectangle
+    style: { fill: "#bbdefb" }
+    trusts: "Trusts: CA Chain" {
+      shape: text
+      style: { font-size: 10 }
+    }
+    validates: "Validates: Server Cert" {
+      shape: text
+      style: { font-size: 10 }
+    }
+  }
+
+  ise: ISE/RADIUS {
+    shape: rectangle
+    style: { fill: "#bbdefb" }
+    trusts: "Trusts: CA Chain" {
+      shape: text
+      style: { font-size: 10 }
+    }
+    validates: "Validates: Client Cert" {
+      shape: text
+      style: { font-size: 10 }
+    }
+  }
+}
+
+endpoints.client_cert -> trust.linux: "Installed on" {
+  style: { stroke: "#388e3c"; stroke-dash: 3 }
+}
+endpoints.server_cert -> trust.ise: "Installed on" {
+  style: { stroke: "#388e3c"; stroke-dash: 3 }
+}
+
+# Mutual authentication
+trust.linux <-> trust.ise: "Mutual TLS Authentication" {
+  style: {
+    stroke: "#1565c0"
+    stroke-width: 3
+    bold: true
+  }
+}
