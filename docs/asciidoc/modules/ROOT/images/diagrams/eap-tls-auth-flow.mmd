@@ -1,0 +1,67 @@
+%%{init: {
+  'theme': 'dark',
+  'themeVariables': {
+    'primaryColor': '#1a1a3a',
+    'primaryTextColor': '#ffffff',
+    'primaryBorderColor': '#89b4fa',
+    'secondaryColor': '#2d2d1a',
+    'secondaryTextColor': '#ffffff',
+    'secondaryBorderColor': '#f5a623',
+    'tertiaryColor': '#2a1a3a',
+    'tertiaryTextColor': '#ffffff',
+    'tertiaryBorderColor': '#cba6f7',
+    'lineColor': '#50fa7b',
+    'textColor': '#ffffff',
+    'actorLineColor': '#50fa7b',
+    'signalColor': '#89b4fa',
+    'signalTextColor': '#ffffff',
+    'labelBoxBkgColor': '#0a1628',
+    'labelBoxBorderColor': '#50fa7b',
+    'labelTextColor': '#50fa7b',
+    'loopTextColor': '#f5a623',
+    'noteBkgColor': '#1a3a1a',
+    'noteTextColor': '#50fa7b',
+    'noteBorderColor': '#50fa7b',
+    'activationBkgColor': '#1a1a3a',
+    'activationBorderColor': '#89b4fa',
+    'sequenceNumberColor': '#0a1628'
+  }
+}}%%
+
+sequenceDiagram
+    autonumber
+
+    participant S as Linux Client<br/>(NetworkManager)
+    participant A as Authenticator<br/>(Switch/AP)
+    participant R as RADIUS Server<br/>(ISE)
+
+    rect rgba(10, 22, 40, 0.8)
+    Note over S,R: 802.1X EAP-TLS Authentication
+
+    S->>A: EAPOL-Start
+    A->>S: EAP-Request/Identity
+    S->>A: EAP-Response/Identity
+
+    A->>R: RADIUS Access-Request<br/>(EAP-Response/Identity)
+
+    rect rgba(42, 26, 58, 0.6)
+    Note over S,R: TLS Handshake
+    R->>A: RADIUS Access-Challenge<br/>(EAP-Request/TLS)
+    A->>S: EAP-Request/TLS (Server Hello + Cert)
+    S->>A: EAP-Response/TLS (Client Cert + Verify)
+    A->>R: RADIUS Access-Request<br/>(EAP-Response/TLS)
+    end
+
+    R->>R: Validate Client Certificate<br/>Check Policy & Authorization
+
+    R->>A: RADIUS Access-Accept<br/>(EAP-Success + VLAN + ACL)
+    A->>S: EAP-Success
+
+    rect rgba(26, 58, 26, 0.6)
+    Note over S,A: Port Authorized
+    A->>A: Apply VLAN Assignment<br/>Apply dACL
+    S->>A: DHCP Discover
+    A->>S: Network Access Granted
+    end
+
+    end
