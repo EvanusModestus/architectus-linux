@@ -1,149 +1,177 @@
+# =============================================================================
 # EAP-TLS Certificate Chain
+# Architectus Linux Documentation
+# =============================================================================
 
 direction: down
 
-# PKI Hierarchy - clean vertical flow
-root: Root CA {
-  shape: rectangle
+title: {
+  label: "EAP-TLS\nCertificate Chain"
+  near: top-center
+  shape: text
   style: {
-    fill: "#c62828"
-    font-color: white
+    font-size: 28
     bold: true
-    border-radius: 4
+    font-color: "#50fa7b"
   }
 }
 
-intermediate: Intermediate CA {
-  shape: rectangle
+# =============================================================================
+# PKI HIERARCHY
+# =============================================================================
+
+pki: "PKI HIERARCHY" {
   style: {
-    fill: "#f9a825"
-    font-color: white
+    fill: "#0a1a0a"
+    stroke: "#50fa7b"
+    stroke-width: 4
+    font-color: "#50fa7b"
+    font-size: 18
     bold: true
-    border-radius: 4
-  }
-}
-
-# Endpoint certs side by side
-certs: {
-  direction: right
-  style: {
-    fill: transparent
-    stroke: transparent
   }
 
-  server: Server Cert {
-    shape: rectangle
+  root: {
+    label: "Root CA\n\nOffline - Air-gapped\nValidity: 10-20 years\nTrust Anchor"
+    shape: hexagon
     style: {
-      fill: "#388e3c"
-      font-color: white
+      fill: "#1a0a0a"
+      stroke: "#ff6b6b"
+      stroke-width: 4
+      font-color: "#ff6b6b"
+      font-size: 14
       bold: true
-      border-radius: 4
     }
   }
 
-  client: Client Cert {
-    shape: rectangle
+  intermediate: {
+    label: "Intermediate CA\n\nIssuing CA\nValidity: 5-10 years\nCRL Distribution"
+    shape: hexagon
     style: {
-      fill: "#388e3c"
-      font-color: white
-      bold: true
-      border-radius: 4
+      fill: "#2d2d1a"
+      stroke: "#f5a623"
+      stroke-width: 3
+      font-color: "#f5a623"
+      font-size: 14
+    }
+  }
+
+  root -> intermediate: "Signs" {
+    style: {
+      stroke: "#ff6b6b"
+      stroke-width: 3
     }
   }
 }
 
-# Signing chain
-root -> intermediate: "Signs" {
+# =============================================================================
+# ENDPOINT CERTIFICATES
+# =============================================================================
+
+certs: "ENDPOINT CERTIFICATES" {
   style: {
-    stroke: "#c62828"
+    fill: "#0a1628"
+    stroke: "#89b4fa"
+    stroke-width: 3
+    font-color: "#89b4fa"
+    font-size: 18
+    bold: true
+  }
+
+  server: {
+    label: "Server Certificate\n\nRADIUS Server FQDN\nEKU: id-kp-serverAuth\nKey Usage: Digital Signature"
+    shape: hexagon
+    style: {
+      fill: "#2a1a3a"
+      stroke: "#cba6f7"
+      stroke-width: 3
+      font-color: "#ffffff"
+      font-size: 14
+    }
+  }
+
+  client: {
+    label: "Client Certificate\n\nEndpoint Identity\nEKU: id-kp-clientAuth\nKey Usage: Digital Signature"
+    shape: hexagon
+    style: {
+      fill: "#1a1a3a"
+      stroke: "#89b4fa"
+      stroke-width: 3
+      font-color: "#ffffff"
+      font-size: 14
+    }
+  }
+}
+
+pki.intermediate -> certs.server: "Issues" {
+  style: {
+    stroke: "#f5a623"
     stroke-width: 2
   }
 }
 
-intermediate -> certs: "Issues" {
+pki.intermediate -> certs.client: "Issues" {
   style: {
-    stroke: "#f9a825"
+    stroke: "#f5a623"
     stroke-width: 2
   }
 }
 
-# Trust endpoints side by side
-endpoints: {
-  direction: right
+# =============================================================================
+# TRUST ENDPOINTS
+# =============================================================================
+
+trust: "MUTUAL AUTHENTICATION" {
   style: {
-    fill: transparent
-    stroke: transparent
-  }
-
-  ise: RADIUS Server {
-    shape: rectangle
-    style: {
-      fill: "#7b1fa2"
-      font-color: white
-      bold: true
-      border-radius: 4
-    }
-  }
-
-  linux: Linux Client {
-    shape: rectangle
-    style: {
-      fill: "#1565c0"
-      font-color: white
-      bold: true
-      border-radius: 4
-    }
-  }
-}
-
-# Install relationships
-certs.server -> endpoints.ise: "Installed" {
-  style: {
-    stroke: "#7b1fa2"
-    stroke-dash: 3
-  }
-}
-
-certs.client -> endpoints.linux: "Installed" {
-  style: {
-    stroke: "#1565c0"
-    stroke-dash: 3
-  }
-}
-
-# Mutual auth
-mutual: Mutual TLS Authentication {
-  shape: rectangle
-  style: {
-    fill: "#0d47a1"
-    font-color: white
+    fill: "#0a2a2a"
+    stroke: "#94e2d5"
+    stroke-width: 3
+    font-color: "#94e2d5"
+    font-size: 18
     bold: true
-    border-radius: 4
+  }
+
+  radius: {
+    label: "RADIUS Server\n\nValidates Client Cert\nTrusts CA Chain\nPolicy Enforcement"
+    shape: hexagon
+    style: {
+      fill: "#2a1a3a"
+      stroke: "#cba6f7"
+      stroke-width: 3
+      font-color: "#ffffff"
+      font-size: 14
+    }
+  }
+
+  linux: {
+    label: "Linux Client\n\nValidates Server Cert\nTrusts CA Chain\nNetworkManager"
+    shape: hexagon
+    style: {
+      fill: "#1a1a3a"
+      stroke: "#89b4fa"
+      stroke-width: 3
+      font-color: "#ffffff"
+      font-size: 14
+    }
+  }
+
+  radius <-> linux: "Mutual TLS" {
+    style: {
+      stroke: "#50fa7b"
+      stroke-width: 4
+    }
   }
 }
 
-endpoints -> mutual: "Both validate chain" {
+certs.server -> trust.radius: "Installed" {
   style: {
-    stroke: "#0d47a1"
-    stroke-width: 2
+    stroke: "#cba6f7"
+    stroke-dash: 4
   }
 }
 
-# EKU annotations
-eku: {
-  direction: right
+certs.client -> trust.linux: "Installed" {
   style: {
-    fill: transparent
-    stroke: transparent
-  }
-
-  server_eku: "id-kp-serverAuth" {
-    shape: text
-    style: { font-size: 10; italic: true; font-color: "#388e3c" }
-  }
-
-  client_eku: "id-kp-clientAuth" {
-    shape: text
-    style: { font-size: 10; italic: true; font-color: "#388e3c" }
+    stroke: "#89b4fa"
+    stroke-dash: 4
   }
 }

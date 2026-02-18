@@ -1,140 +1,204 @@
+# =============================================================================
 # systemd Service Dependencies for 802.1X
+# Architectus Linux Documentation
+# =============================================================================
 
 direction: down
 
-# Clean vertical flow
-device: sys-subsystem-net-devices-eth0.device {
-  shape: rectangle
+title: {
+  label: "systemd Boot Order\n802.1X Authentication"
+  near: top-center
+  shape: text
   style: {
-    fill: "#607d8b"
-    font-color: white
+    font-size: 28
     bold: true
-    border-radius: 4
+    font-color: "#50fa7b"
   }
 }
 
-wpa: wpa_supplicant-wired@eth0 {
-  shape: rectangle
+# =============================================================================
+# HARDWARE LAYER
+# =============================================================================
+
+hw: "HARDWARE" {
   style: {
-    fill: "#1565c0"
-    font-color: white
+    fill: "#1a1a1a"
+    stroke: "#a0a0a0"
+    stroke-width: 3
+    font-color: "#a0a0a0"
+    font-size: 16
     bold: true
-    border-radius: 4
   }
-}
 
-dhcp: dhcpcd@eth0 {
-  shape: rectangle
-  style: {
-    fill: "#388e3c"
-    font-color: white
-    bold: true
-    border-radius: 4
-  }
-}
-
-network_target: network.target {
-  shape: rectangle
-  style: {
-    fill: "#e65100"
-    font-color: white
-    bold: true
-    border-radius: 4
-  }
-}
-
-online_target: network-online.target {
-  shape: rectangle
-  style: {
-    fill: "#ff8f00"
-    font-color: white
-    bold: true
-    border-radius: 4
-  }
-}
-
-# Dependency chain
-device -> wpa: "Requires, After" {
-  style: {
-    stroke: "#1565c0"
-    stroke-width: 2
-  }
-}
-
-wpa -> dhcp: "After (port authorized)" {
-  style: {
-    stroke: "#388e3c"
-    stroke-width: 2
-  }
-}
-
-dhcp -> network_target: "Before" {
-  style: {
-    stroke: "#e65100"
-    stroke-width: 2
-  }
-}
-
-network_target -> online_target: "Before" {
-  style: {
-    stroke: "#ff8f00"
-    stroke-width: 2
-  }
-}
-
-# Conflict - positioned to the side
-iwd: iwd.service (MASKED) {
-  shape: rectangle
-  style: {
-    fill: "#c62828"
-    font-color: white
-    bold: true
-    border-radius: 4
-  }
-}
-
-wpa -> iwd: "Conflicts" {
-  style: {
-    stroke: "#c62828"
-    stroke-dash: 5
-    stroke-width: 2
-  }
-}
-
-# Layer labels (legend)
-labels: {
-  direction: down
-
-  l1: Hardware {
-    shape: text
+  device: {
+    label: "sys-subsystem-net-devices-eth0.device\n\nInterface Exists\nKernel Driver Loaded"
+    shape: hexagon
     style: {
+      fill: "#2d2d2d"
+      stroke: "#a0a0a0"
+      stroke-width: 2
+      font-color: "#ffffff"
       font-size: 12
-      italic: true
-      font-color: "#607d8b"
     }
   }
-  l2: Authentication {
-    shape: text
+}
+
+# =============================================================================
+# AUTHENTICATION LAYER
+# =============================================================================
+
+auth: "AUTHENTICATION" {
+  style: {
+    fill: "#0a0a2a"
+    stroke: "#89b4fa"
+    stroke-width: 3
+    font-color: "#89b4fa"
+    font-size: 16
+    bold: true
+  }
+
+  nm: {
+    label: "NetworkManager\n\n802.1X EAP-TLS\nCertificate Auth\nPort Authorization"
+    shape: hexagon
     style: {
+      fill: "#1a1a3a"
+      stroke: "#89b4fa"
+      stroke-width: 3
+      font-color: "#ffffff"
       font-size: 12
-      italic: true
-      font-color: "#1565c0"
     }
   }
-  l3: Network {
-    shape: text
+}
+
+# =============================================================================
+# NETWORK LAYER
+# =============================================================================
+
+net: "NETWORK" {
+  style: {
+    fill: "#0a1a0a"
+    stroke: "#50fa7b"
+    stroke-width: 3
+    font-color: "#50fa7b"
+    font-size: 16
+    bold: true
+  }
+
+  dhcp: {
+    label: "DHCP Client\n\nIP Assignment\nAfter Port Authorized"
+    shape: hexagon
     style: {
+      fill: "#1a3a1a"
+      stroke: "#50fa7b"
+      stroke-width: 2
+      font-color: "#ffffff"
       font-size: 12
-      italic: true
-      font-color: "#388e3c"
     }
   }
-  l4: Targets {
-    shape: text
+}
+
+# =============================================================================
+# TARGETS
+# =============================================================================
+
+targets: "TARGETS" {
+  style: {
+    fill: "#1a1a0a"
+    stroke: "#f5a623"
+    stroke-width: 3
+    font-color: "#f5a623"
+    font-size: 16
+    bold: true
+  }
+
+  network_target: {
+    label: "network.target\n\nBasic Network Ready"
+    shape: rectangle
     style: {
+      fill: "#2d2d1a"
+      stroke: "#f5a623"
+      stroke-width: 2
+      font-color: "#ffffff"
       font-size: 12
-      italic: true
-      font-color: "#e65100"
     }
+  }
+
+  online_target: {
+    label: "network-online.target\n\nFull Connectivity\nDependent Services Start"
+    shape: rectangle
+    style: {
+      fill: "#2d2d1a"
+      stroke: "#f5a623"
+      stroke-width: 3
+      font-color: "#f5a623"
+      font-size: 12
+    }
+  }
+
+  network_target -> online_target: "Before" {
+    style: {
+      stroke: "#f5a623"
+      stroke-width: 2
+    }
+  }
+}
+
+# =============================================================================
+# CONFLICTS
+# =============================================================================
+
+conflicts: "CONFLICTS" {
+  style: {
+    fill: "#1a0a0a"
+    stroke: "#ff6b6b"
+    stroke-width: 3
+    font-color: "#ff6b6b"
+    font-size: 16
+    bold: true
+  }
+
+  iwd: {
+    label: "iwd.service\n\nMASKED\nConflicts with NM"
+    shape: hexagon
+    style: {
+      fill: "#2d1a1a"
+      stroke: "#ff6b6b"
+      stroke-width: 2
+      font-color: "#ff6b6b"
+      font-size: 12
+    }
+  }
+}
+
+# =============================================================================
+# DEPENDENCY CHAIN
+# =============================================================================
+
+hw.device -> auth.nm: "Requires, After" {
+  style: {
+    stroke: "#89b4fa"
+    stroke-width: 3
+  }
+}
+
+auth.nm -> net.dhcp: "After (Authorized)" {
+  style: {
+    stroke: "#50fa7b"
+    stroke-width: 3
+  }
+}
+
+net.dhcp -> targets.network_target: "Before" {
+  style: {
+    stroke: "#f5a623"
+    stroke-width: 2
+  }
+}
+
+auth.nm -> conflicts.iwd: "Conflicts" {
+  style: {
+    stroke: "#ff6b6b"
+    stroke-width: 2
+    stroke-dash: 4
   }
 }

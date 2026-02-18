@@ -1,139 +1,246 @@
+# =============================================================================
 # 802.1X EAP-TLS Authentication Flow
+# Architectus Linux Documentation
+# =============================================================================
 
-direction: down
+direction: right
 
-# Actors row
-actors: {
-  direction: right
-
-  supplicant: Supplicant {
-    shape: rectangle
-    style: {
-      fill: "#1565c0"
-      font-color: white
-      bold: true
-      border-radius: 4
-    }
-  }
-
-  authenticator: Authenticator {
-    shape: rectangle
-    style: {
-      fill: "#e65100"
-      font-color: white
-      bold: true
-      border-radius: 4
-    }
-  }
-
-  radius: RADIUS Server {
-    shape: rectangle
-    style: {
-      fill: "#7b1fa2"
-      font-color: white
-      bold: true
-      border-radius: 4
-    }
-  }
-}
-
-# Sequence steps
-s1: "1. EAPOL-Start" {
+title: {
+  label: "802.1X EAP-TLS\nAuthentication Flow"
+  near: top-center
+  shape: text
   style: {
-    fill: "#e3f2fd"
-    border-radius: 4
-  }
-}
-
-s2: "2. EAP-Request/Identity" {
-  style: {
-    fill: "#fff3e0"
-    border-radius: 4
-  }
-}
-
-s3: "3. EAP-Response/Identity" {
-  style: {
-    fill: "#e3f2fd"
-    border-radius: 4
-  }
-}
-
-s4: "4. RADIUS Access-Request" {
-  style: {
-    fill: "#fff3e0"
-    border-radius: 4
-  }
-}
-
-s5: "5. TLS Handshake + Certs" {
-  style: {
-    fill: "#f3e5f5"
-    border-radius: 4
-  }
-}
-
-s6: "6. Access-Accept + VLAN" {
-  style: {
-    fill: "#c8e6c9"
-    border-radius: 4
-  }
-}
-
-s7: "7. EAP-Success" {
-  style: {
-    fill: "#c8e6c9"
-    border-radius: 4
-  }
-}
-
-# Result
-result: Port Authorized {
-  shape: rectangle
-  style: {
-    fill: "#2e7d32"
-    font-color: white
+    font-size: 28
     bold: true
-    border-radius: 4
+    font-color: "#50fa7b"
   }
 }
 
-# Flow
-actors -> s1
-s1 -> s2
-s2 -> s3
-s3 -> s4
-s4 -> s5
-s5 -> s6
-s6 -> s7
-s7 -> result
+# =============================================================================
+# SUPPLICANT
+# =============================================================================
 
-# Legend
-legend: {
-  direction: right
+supplicant: "SUPPLICANT" {
+  style: {
+    fill: "#0a0a2a"
+    stroke: "#89b4fa"
+    stroke-width: 3
+    font-color: "#89b4fa"
+    font-size: 18
+    bold: true
+  }
 
-  l1: Supplicant {
+  client: {
+    label: "Linux Client\n\nNetworkManager\nClient Certificate\nPrivate Key"
+    shape: hexagon
     style: {
-      fill: "#e3f2fd"
-      border-radius: 4
+      fill: "#1a1a3a"
+      stroke: "#89b4fa"
+      stroke-width: 3
+      font-color: "#ffffff"
+      font-size: 14
     }
   }
-  l2: Authenticator {
+}
+
+# =============================================================================
+# AUTHENTICATOR
+# =============================================================================
+
+authenticator: "AUTHENTICATOR" {
+  style: {
+    fill: "#1a1a0a"
+    stroke: "#f5a623"
+    stroke-width: 3
+    font-color: "#f5a623"
+    font-size: 18
+    bold: true
+  }
+
+  switch: {
+    label: "Network Switch\n\n802.1X Port Control\nEAPOL ↔ RADIUS\nVLAN Assignment"
+    shape: hexagon
     style: {
-      fill: "#fff3e0"
-      border-radius: 4
+      fill: "#2d2d1a"
+      stroke: "#f5a623"
+      stroke-width: 3
+      font-color: "#ffffff"
+      font-size: 14
     }
   }
-  l3: RADIUS {
+}
+
+# =============================================================================
+# AUTHENTICATION SERVER
+# =============================================================================
+
+radius: "AUTH SERVER" {
+  style: {
+    fill: "#1a0a1a"
+    stroke: "#cba6f7"
+    stroke-width: 3
+    font-color: "#cba6f7"
+    font-size: 18
+    bold: true
+  }
+
+  ise: {
+    label: "RADIUS / ISE\n\nEAP-TLS Validation\nCertificate Chain\nPolicy Engine\nAuthorization"
+    shape: hexagon
     style: {
-      fill: "#f3e5f5"
-      border-radius: 4
+      fill: "#2a1a3a"
+      stroke: "#cba6f7"
+      stroke-width: 3
+      font-color: "#ffffff"
+      font-size: 14
     }
   }
-  l4: Success {
+}
+
+# =============================================================================
+# CONNECTIONS
+# =============================================================================
+
+supplicant.client -> authenticator.switch: "EAPOL\n(Layer 2)" {
+  style: {
+    stroke: "#89b4fa"
+    stroke-width: 4
+  }
+}
+
+authenticator.switch -> radius.ise: "RADIUS\n(UDP 1812)" {
+  style: {
+    stroke: "#cba6f7"
+    stroke-width: 4
+  }
+}
+
+# =============================================================================
+# AUTHENTICATION SEQUENCE
+# =============================================================================
+
+sequence: "AUTHENTICATION SEQUENCE" {
+  style: {
+    fill: "#0a1628"
+    stroke: "#50fa7b"
+    stroke-width: 3
+    font-color: "#50fa7b"
+    font-size: 16
+    bold: true
+  }
+
+  s1: {
+    label: "1. EAPOL-Start"
+    shape: rectangle
     style: {
-      fill: "#c8e6c9"
-      border-radius: 4
+      fill: "#1a1a3a"
+      stroke: "#89b4fa"
+      stroke-width: 2
+      font-color: "#89b4fa"
+      font-size: 12
     }
+  }
+
+  s2: {
+    label: "2. EAP-Request/Identity"
+    shape: rectangle
+    style: {
+      fill: "#2d2d1a"
+      stroke: "#f5a623"
+      stroke-width: 2
+      font-color: "#f5a623"
+      font-size: 12
+    }
+  }
+
+  s3: {
+    label: "3. EAP-Response/Identity"
+    shape: rectangle
+    style: {
+      fill: "#1a1a3a"
+      stroke: "#89b4fa"
+      stroke-width: 2
+      font-color: "#89b4fa"
+      font-size: 12
+    }
+  }
+
+  s4: {
+    label: "4. RADIUS Access-Request"
+    shape: rectangle
+    style: {
+      fill: "#2d2d1a"
+      stroke: "#f5a623"
+      stroke-width: 2
+      font-color: "#f5a623"
+      font-size: 12
+    }
+  }
+
+  s5: {
+    label: "5. TLS Handshake + Certs"
+    shape: rectangle
+    style: {
+      fill: "#2a1a3a"
+      stroke: "#cba6f7"
+      stroke-width: 2
+      font-color: "#cba6f7"
+      font-size: 12
+    }
+  }
+
+  s6: {
+    label: "6. Access-Accept + VLAN"
+    shape: rectangle
+    style: {
+      fill: "#1a3a1a"
+      stroke: "#50fa7b"
+      stroke-width: 2
+      font-color: "#50fa7b"
+      font-size: 12
+    }
+  }
+
+  s7: {
+    label: "7. EAP-Success"
+    shape: rectangle
+    style: {
+      fill: "#1a3a1a"
+      stroke: "#50fa7b"
+      stroke-width: 2
+      font-color: "#50fa7b"
+      font-size: 12
+    }
+  }
+
+  s1 -> s2 -> s3 -> s4 -> s5 -> s6 -> s7 {
+    style: {
+      stroke: "#50fa7b"
+      stroke-width: 2
+    }
+  }
+}
+
+# =============================================================================
+# RESULT
+# =============================================================================
+
+result: {
+  label: "PORT AUTHORIZED\n\nVLAN Assigned\nACL Applied\nNetwork Access"
+  shape: hexagon
+  style: {
+    fill: "#1a3a1a"
+    stroke: "#50fa7b"
+    stroke-width: 4
+    font-color: "#50fa7b"
+    font-size: 14
+    bold: true
+  }
+}
+
+sequence -> result: "Success" {
+  style: {
+    stroke: "#50fa7b"
+    stroke-width: 3
   }
 }
